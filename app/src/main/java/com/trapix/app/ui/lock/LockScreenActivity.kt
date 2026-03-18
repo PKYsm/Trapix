@@ -69,6 +69,10 @@ class LockScreenActivity : AppCompatActivity() {
         if (enteredPin.length < 6) {
             enteredPin += digit
             updateLockPinDots()
+            // Auto-check when PIN length matches saved PIN length
+            if (enteredPin.length == prefs.lockValue.length && prefs.lockValue.isNotEmpty()) {
+                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ checkPin() }, 150)
+            }
         }
     }
 
@@ -122,14 +126,46 @@ class LockScreenActivity : AppCompatActivity() {
         binding.layoutPatternLock.visibility = View.GONE
         binding.layoutPasswordLock.visibility = View.VISIBLE
 
-        binding.btnPasswordUnlock.setOnClickListener {
-            val entered = binding.etLockPassword.text.toString()
-            if (entered == prefs.lockValue) {
-                unlockSuccess()
-            } else {
-                binding.etLockPassword.text?.clear()
-                handleWrongAttempt()
+        // Auto-focus and show native keyboard
+        binding.etLockPassword.requestFocus()
+        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        binding.etLockPassword.postDelayed({
+            imm.showSoftInput(binding.etLockPassword, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
+        }, 200)
+
+        // Submit on IME Done/Enter key
+        binding.etLockPassword.setOnEditorActionListener { _, _, _ ->
+            checkPassword()
+            true
+        }
+
+        // Also submit button as fallback
+        binding.btnPasswordUnlock.setOnClickListener { checkPassword() }
+
+        // Auto-submit when length matches
+        binding.etLockPassword.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: android.text.Editable?) {
+                val entered = s?.toString() ?: return
+                if (entered.length == prefs.lockValue.length && prefs.lockValue.isNotEmpty()) {
+                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ checkPassword() }, 150)
+                }
             }
+        })
+    }
+
+    private fun checkPassword() {
+        val entered = binding.etLockPassword.text.toString()
+        if (entered.isEmpty()) return
+        // Hide keyboard
+        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.hideSoftInputFromWindow(binding.etLockPassword.windowToken, 0)
+        if (entered == prefs.lockValue) {
+            unlockSuccess()
+        } else {
+            binding.etLockPassword.text?.clear()
+            handleWrongAttempt()
         }
     }
 

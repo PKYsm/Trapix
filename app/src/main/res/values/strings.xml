@@ -12,4 +12,5 @@
     <string name="settings_title">Settings</string>
     <string name="no_captures_yet">No intruder captures yet.\nYour device is safe 🛡️</string>
     <string name="captures_title">Intruder Captures</string>
+    <string name="accessibility_service_description">Trapix monitors lock screen for wrong password attempts to capture intruder photos silently.</string>
 </resources>

@@ -173,19 +173,38 @@ class SetupLockActivity : AppCompatActivity() {
 
     // ─── Password Setup ──────────────────────────────────────────────────────
     private fun setupPasswordInput() {
-        binding.btnPasswordOk.setOnClickListener {
-            val pass = binding.etPassword.text.toString()
-            val confirm = binding.etConfirmPassword.text.toString()
-            if (pass.length < 4) {
-                Toast.makeText(this, "Minimum 4 characters required", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
+        // Auto-focus password field and show native keyboard
+        binding.etPassword.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+                imm.showSoftInput(binding.etPassword, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
             }
-            if (pass != confirm) {
-                Toast.makeText(this, "Passwords don't match", Toast.LENGTH_SHORT).show()
-                return@setOnClickListener
-            }
-            saveLock(AppPrefs.LOCK_TYPE_PASSWORD, pass)
         }
+
+        // IME action on confirm field submits
+        binding.etConfirmPassword.setOnEditorActionListener { _, _, _ ->
+            validateAndSavePassword()
+            true
+        }
+
+        binding.btnPasswordOk.setOnClickListener { validateAndSavePassword() }
+    }
+
+    private fun validateAndSavePassword() {
+        val pass = binding.etPassword.text.toString()
+        val confirm = binding.etConfirmPassword.text.toString()
+        if (pass.length < 4) {
+            Toast.makeText(this, "Minimum 4 characters required", Toast.LENGTH_SHORT).show()
+            return
+        }
+        if (pass != confirm) {
+            Toast.makeText(this, "Passwords don't match", Toast.LENGTH_SHORT).show()
+            return
+        }
+        // Hide keyboard
+        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+        imm.hideSoftInputFromWindow(binding.etConfirmPassword.windowToken, 0)
+        saveLock(AppPrefs.LOCK_TYPE_PASSWORD, pass)
     }
 
     // ─── Save & Navigate ─────────────────────────────────────────────────────

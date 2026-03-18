@@ -1,6 +1,7 @@
 package com.trapix.app.ui.settings
 
 import android.content.ComponentName
+import android.provider.Settings as AndroidSettings
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -102,6 +103,22 @@ class SettingsActivity : AppCompatActivity() {
             toggleLauncherIcon(!checked)
         }
 
+        // Screen lock monitor toggle
+        binding.btnEnableScreenMonitor.setOnClickListener {
+            // Open accessibility settings so user can enable the service
+            val intent = android.content.Intent(AndroidSettings.ACTION_ACCESSIBILITY_SETTINGS)
+            startActivity(intent)
+            android.widget.Toast.makeText(this,
+                "Trapix dhundho aur enable karo 🔍", android.widget.Toast.LENGTH_LONG).show()
+        }
+
+
+        // Developer social links
+        binding.btnOpenGithub.setOnClickListener { openUrl("https://github.com/PKYsm") }
+        binding.btnOpenInstagram.setOnClickListener { openUrl("https://instagram.com/RasaVedic") }
+        binding.tvGithub.setOnClickListener { openUrl("https://github.com/PKYsm") }
+        binding.tvInstagram.setOnClickListener { openUrl("https://instagram.com/RasaVedic") }
+
         // Reset all settings
         binding.btnResetSettings.setOnClickListener {
             AlertDialog.Builder(this)
@@ -146,4 +163,14 @@ class SettingsActivity : AppCompatActivity() {
         onBackPressedDispatcher.onBackPressed()
         return true
     }
+
+    private fun openUrl(url: String) {
+        try {
+            val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))
+            startActivity(intent)
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(this, "Browser nahi mila!", android.widget.Toast.LENGTH_SHORT).show()
+        }
+    }
+
 }

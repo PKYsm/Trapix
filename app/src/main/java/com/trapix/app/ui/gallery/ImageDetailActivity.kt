@@ -59,10 +59,24 @@ class ImageDetailActivity : AppCompatActivity() {
 
     private fun displayLog(log: IntruderLog) {
         val file = File(log.imagePath)
-        Glide.with(this)
-            .load(if (file.exists()) file else R.drawable.ic_broken_image)
-            .fitCenter()
-            .into(binding.ivFullImage)
+        if (file.exists()) {
+            Glide.with(this)
+                .load(file)
+                .fitCenter()
+                .error(R.drawable.ic_broken_image)
+                .into(binding.ivFullImage)
+        } else {
+            binding.ivFullImage.setImageResource(R.drawable.ic_broken_image)
+        }
+
+        // Click image to zoom/fullscreen
+        binding.ivFullImage.setOnClickListener {
+            if (file.exists()) {
+                val intent = Intent(this, FullscreenImageActivity::class.java)
+                intent.putExtra("image_path", file.absolutePath)
+                startActivity(intent)
+            }
+        }
 
         val sdf = SimpleDateFormat("dd MMM yyyy, HH:mm:ss", Locale.getDefault())
         binding.tvDetailTimestamp.text = "📅 ${sdf.format(Date(log.timestamp))}"

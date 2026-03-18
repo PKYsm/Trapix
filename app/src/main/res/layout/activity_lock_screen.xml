@@ -132,7 +132,10 @@
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
                 android:textColor="@color/trapix_text_primary"
-                android:imeOptions="actionDone"/>
+                android:imeOptions="actionDone"
+                android:imeActionLabel="Unlock"
+                android:inputType="textPassword"
+                android:textColor="@color/trapix_text_primary"/>
 
         </com.google.android.material.textfield.TextInputLayout>
 
@@ -141,7 +144,8 @@
             style="@style/TrapixButton"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:text="Unlock"/>
+            android:text="→ Unlock"
+            android:textSize="13sp"/>
 
     </LinearLayout>
 

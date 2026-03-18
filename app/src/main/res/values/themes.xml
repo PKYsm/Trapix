@@ -63,4 +63,10 @@
         <item name="android:paddingStart">12dp</item>
         <item name="android:paddingEnd">12dp</item>
     </style>
+    <style name="Theme.Trapix.Fullscreen" parent="Theme.Trapix">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">#000000</item>
+        <item name="android:statusBarColor">#000000</item>
+        <item name="android:navigationBarColor">#000000</item>
+    </style>
 </resources>
