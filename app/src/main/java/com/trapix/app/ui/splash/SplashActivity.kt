@@ -24,6 +24,9 @@ class SplashActivity : AppCompatActivity() {
 
         prefs = AppPrefs(this)
 
+        // Reset wrong attempt count on every fresh app open
+        prefs.resetWrongAttemptCount()
+
         // Animate logo
         val fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in)
         val slideUp = AnimationUtils.loadAnimation(this, R.anim.slide_up)

@@ -222,7 +222,6 @@ class LockScreenActivity : AppCompatActivity() {
     // ─── Wrong Attempt Handler ────────────────────────────────────────────────
     private fun handleWrongAttempt() {
         wrongAttempts++
-        prefs.wrongAttemptCount++
         val threshold = prefs.wrongAttemptThreshold
         val remaining = threshold - wrongAttempts
 
@@ -239,8 +238,9 @@ class LockScreenActivity : AppCompatActivity() {
 
         // Capture if threshold reached
         if (wrongAttempts >= threshold) {
+            prefs.wrongAttemptCount++ // Only increment here, right before capture
             triggerCapture()
-            wrongAttempts = 0 // Reset counter after capture so it keeps counting in next rounds
+            wrongAttempts = 0 // Reset local counter after capture
         }
     }
 

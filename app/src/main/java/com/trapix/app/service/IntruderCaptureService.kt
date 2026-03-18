@@ -38,6 +38,9 @@ class IntruderCaptureService : LifecycleService() {
         const val NOTIF_ID_ALERT = 1002
         const val ACTION_CAPTURE = "com.trapix.app.ACTION_CAPTURE"
         const val EXTRA_ATTEMPT_NUMBER = "attempt_number"
+        
+        @Volatile
+        var isCapturing = false // Prevent duplicate captures
     }
 
     private val serviceScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -53,6 +56,14 @@ class IntruderCaptureService : LifecycleService() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
+        
+        // Prevent duplicate captures running simultaneously
+        if (isCapturing) {
+            stopSelf()
+            return START_NOT_STICKY
+        }
+        isCapturing = true
+        
         val attemptNumber = intent?.getIntExtra(EXTRA_ATTEMPT_NUMBER, 1) ?: 1
 
         // Start foreground with a silent notification briefly
@@ -254,6 +265,7 @@ class IntruderCaptureService : LifecycleService() {
     }
 
     override fun onDestroy() {
+        isCapturing = false
         serviceScope.cancel()
         super.onDestroy()
     }
