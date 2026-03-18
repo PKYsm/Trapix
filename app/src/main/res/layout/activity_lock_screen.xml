@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="@color/trapix_bg">
 
-    <!-- Top logo and name -->
     <LinearLayout
         android:id="@+id/layoutHeader"
         android:layout_width="wrap_content"
@@ -35,7 +34,6 @@
             android:layout_marginTop="8dp"/>
     </LinearLayout>
 
-    <!-- PIN Lock View -->
     <LinearLayout
         android:id="@+id/layoutPinLock"
         android:layout_width="match_parent"
@@ -58,22 +56,24 @@
             android:letterSpacing="0.3"
             android:layout_marginBottom="28dp"/>
 
-        <!-- Numpad rows for lock screen -->
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtn1" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="1" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn2" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="2" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn3" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="3" android:layout_margin="4dp"/>
         </LinearLayout>
+
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtn4" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="4" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn5" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="5" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn6" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="6" android:layout_margin="4dp"/>
         </LinearLayout>
+
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtn7" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="7" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn8" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="8" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn9" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="9" android:layout_margin="4dp"/>
         </LinearLayout>
+
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtnBack" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="⌫" android:layout_margin="4dp" android:textColor="@color/trapix_text_secondary"/>
             <Button android:id="@+id/lockBtn0" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="0" android:layout_margin="4dp"/>
@@ -81,7 +81,6 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Pattern Lock View -->
     <LinearLayout
         android:id="@+id/layoutPatternLock"
         android:layout_width="match_parent"
@@ -98,12 +97,9 @@
         <com.trapix.app.ui.lock.PatternView
             android:id="@+id/lockPatternView"
             android:layout_width="280dp"
-            android:layout_height="280dp"
-            android:layout_gravity="center"/>
-
+            android:layout_height="280dp"/>
     </LinearLayout>
 
-    <!-- Password Lock View -->
     <LinearLayout
         android:id="@+id/layoutPasswordLock"
         android:layout_width="match_parent"
@@ -132,10 +128,7 @@
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
                 android:textColor="@color/trapix_text_primary"
-                android:imeOptions="actionDone"
-                android:imeActionLabel="Unlock"
-                android:textColor="@color/trapix_text_primary"/>
-
+                android:imeOptions="actionDone"/>
         </com.google.android.material.textfield.TextInputLayout>
 
         <Button
@@ -145,10 +138,8 @@
             android:layout_height="52dp"
             android:text="→ Unlock"
             android:textSize="13sp"/>
-
     </LinearLayout>
 
-    <!-- Biometric button -->
     <Button
         android:id="@+id/btnBiometric"
         style="@style/TrapixButtonOutline"
