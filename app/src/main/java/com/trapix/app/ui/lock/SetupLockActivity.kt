@@ -137,12 +137,12 @@ class SetupLockActivity : AppCompatActivity() {
 
     // ─── Pattern Setup ───────────────────────────────────────────────────────
     private fun setupPatternInput() {
-        binding.patternView.setOnPatternListener(object : com.trapix.app.ui.lock.PatternView.OnPatternListener {
+        binding.patternView.onPatternListener = object : com.trapix.app.ui.lock.PatternView.OnPatternListener {
             override fun onPatternComplete(pattern: List<Int>) {
                 handlePatternInput(pattern)
             }
             override fun onPatternStart() {}
-        })
+        }
         binding.btnPatternReset.setOnClickListener {
             binding.patternView.clearPattern()
             resetState()

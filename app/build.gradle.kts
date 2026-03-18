@@ -71,5 +71,6 @@ dependencies {
     kapt(libs.glide.compiler)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.androidx.activity.ktx)
+    implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.fragment.ktx)
 }
