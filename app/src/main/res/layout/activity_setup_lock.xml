@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/trapix_bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="32dp"
+            android:layout_marginTop="24dp">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_shield"
+                app:tint="@color/trapix_accent"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Set Your Lock"
+                android:textColor="@color/trapix_text_primary"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginStart="12dp"/>
+        </LinearLayout>
+
+        <!-- Lock type selector -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="28dp">
+
+            <Button
+                android:id="@+id/btnTypePIN"
+                style="@style/LockTypeButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="44dp"
+                android:text="PIN"
+                android:layout_marginEnd="6dp"/>
+
+            <Button
+                android:id="@+id/btnTypePattern"
+                style="@style/LockTypeButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="44dp"
+                android:text="Pattern"
+                android:layout_marginStart="3dp"
+                android:layout_marginEnd="3dp"/>
+
+            <Button
+                android:id="@+id/btnTypePassword"
+                style="@style/LockTypeButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="44dp"
+                android:text="Password"
+                android:layout_marginStart="6dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvSetupHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Set your lock"
+            android:textColor="@color/trapix_text_secondary"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginBottom="20dp"/>
+
+        <!-- PIN Layout -->
+        <LinearLayout
+            android:id="@+id/layoutPin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <TextView
+                android:id="@+id/tvPinDots"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="○○○○○○"
+                android:textColor="@color/trapix_accent"
+                android:textSize="28sp"
+                android:letterSpacing="0.3"
+                android:layout_marginBottom="24dp"/>
+
+            <!-- Numpad rows -->
+            <include android:id="@+id/layoutNumpad" layout="@layout/layout_numpad"/>
+
+        </LinearLayout>
+
+        <!-- Pattern Layout -->
+        <LinearLayout
+            android:id="@+id/layoutPattern"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <com.trapix.app.ui.lock.PatternView
+                android:id="@+id/patternView"
+                android:layout_width="280dp"
+                android:layout_height="280dp"
+                android:layout_gravity="center"
+                android:layout_marginBottom="24dp"/>
+
+            <Button
+                android:id="@+id/btnPatternReset"
+                style="@style/TrapixButtonOutline"
+                android:layout_width="160dp"
+                android:layout_height="44dp"
+                android:text="Reset Pattern"/>
+
+        </LinearLayout>
+
+        <!-- Password Layout -->
+        <LinearLayout
+            android:id="@+id/layoutPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:visibility="gone">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Enter Password"
+                app:boxBackgroundColor="@color/trapix_card"
+                app:boxStrokeColor="@color/trapix_accent"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_marginBottom="16dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:textColor="@color/trapix_text_primary"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Confirm Password"
+                app:boxBackgroundColor="@color/trapix_card"
+                app:boxStrokeColor="@color/trapix_accent"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                android:layout_marginBottom="24dp">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etConfirmPassword"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPassword"
+                    android:textColor="@color/trapix_text_primary"/>
+
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/btnPasswordOk"
+                style="@style/TrapixButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:text="Set Password"/>
+
+        </LinearLayout>
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>

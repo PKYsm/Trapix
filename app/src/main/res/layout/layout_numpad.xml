@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center">
+
+    <!-- Row 1: 1 2 3 -->
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+        <Button android:id="@+id/btn1" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="1" android:layout_margin="4dp"/>
+        <Button android:id="@+id/btn2" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="2" android:layout_margin="4dp"/>
+        <Button android:id="@+id/btn3" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="3" android:layout_margin="4dp"/>
+    </LinearLayout>
+
+    <!-- Row 2: 4 5 6 -->
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+        <Button android:id="@+id/btn4" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="4" android:layout_margin="4dp"/>
+        <Button android:id="@+id/btn5" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="5" android:layout_margin="4dp"/>
+        <Button android:id="@+id/btn6" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="6" android:layout_margin="4dp"/>
+    </LinearLayout>
+
+    <!-- Row 3: 7 8 9 -->
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+        <Button android:id="@+id/btn7" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="7" android:layout_margin="4dp"/>
+        <Button android:id="@+id/btn8" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="8" android:layout_margin="4dp"/>
+        <Button android:id="@+id/btn9" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="9" android:layout_margin="4dp"/>
+    </LinearLayout>
+
+    <!-- Row 4: backspace 0 OK -->
+    <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
+        <Button android:id="@+id/btnBackspace" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="⌫" android:layout_margin="4dp" android:textColor="@color/trapix_text_secondary"/>
+        <Button android:id="@+id/btn0" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="0" android:layout_margin="4dp"/>
+        <Button android:id="@+id/btnPinOk" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="✓" android:layout_margin="4dp" android:textColor="@color/trapix_accent"/>
+    </LinearLayout>
+
+</LinearLayout>

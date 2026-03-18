@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/trapix_bg">
+
+    <com.google.android.material.appbar.AppBarLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/trapix_bg"
+        app:elevation="0dp">
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"/>
+    </com.google.android.material.appbar.AppBarLayout>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <!-- Lock Section -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔐  LOCK" android:textColor="@color/trapix_accent" android:textSize="11sp" android:letterSpacing="0.15" android:layout_marginBottom="8dp" android:layout_marginTop="8dp"/>
+
+            <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" style="@style/TrapixCard">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Lock Type" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                            <TextView android:id="@+id/tvCurrentLockType" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Current: PIN" android:textColor="@color/trapix_text_secondary" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <Button android:id="@+id/btnChangeLock" style="@style/TrapixButtonOutline" android:layout_width="wrap_content" android:layout_height="40dp" android:text="Change"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/trapix_divider" android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Biometric Unlock" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Fingerprint or Face unlock" android:textColor="@color/trapix_text_secondary" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchBiometric" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/trapix_accent" app:trackTint="@color/trapix_accent_dim"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Capture Section -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📸  CAPTURE" android:textColor="@color/trapix_accent" android:textSize="11sp" android:letterSpacing="0.15" android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" style="@style/TrapixCard">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+
+                    <!-- Threshold -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Capture After" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                            <TextView android:id="@+id/tvThresholdValue" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="3 wrong attempts" android:textColor="@color/trapix_accent" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                            <Button android:id="@+id/btnThresholdMinus" style="@style/NumPadButton" android:layout_width="40dp" android:layout_height="40dp" android:text="−" android:textSize="20sp"/>
+                            <Button android:id="@+id/btnThresholdPlus" style="@style/NumPadButton" android:layout_width="40dp" android:layout_height="40dp" android:text="+" android:textSize="20sp" android:textColor="@color/trapix_accent"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/trapix_divider" android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Use Front Camera" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchFrontCamera" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/trapix_accent" app:trackTint="@color/trapix_accent_dim"/>
+                    </LinearLayout>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                        <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:text="Use Rear Camera" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchRearCamera" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/trapix_accent" app:trackTint="@color/trapix_accent_dim"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Misc Section -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="⚙️  GENERAL" android:textColor="@color/trapix_accent" android:textSize="11sp" android:letterSpacing="0.15" android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" style="@style/TrapixCard">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Notifications" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Alert when intruder captured" android:textColor="@color/trapix_text_secondary" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchNotifications" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/trapix_accent" app:trackTint="@color/trapix_accent_dim"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/trapix_divider" android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Auto Save to Gallery" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Save captures to phone gallery" android:textColor="@color/trapix_text_secondary" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchSaveGallery" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/trapix_accent" app:trackTint="@color/trapix_accent_dim"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/trapix_divider" android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="12dp">
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Dark Theme" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchDarkTheme" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/trapix_accent" app:trackTint="@color/trapix_accent_dim"/>
+                    </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/trapix_divider" android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Hide from Launcher" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Remove app icon from home screen" android:textColor="@color/trapix_text_secondary" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchHideLauncher" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/trapix_red" app:trackTint="@color/trapix_red"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <Button
+                android:id="@+id/btnResetSettings"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:text="Reset All Settings"
+                android:textColor="@color/trapix_text_secondary"
+                app:strokeColor="@color/trapix_divider"
+                app:cornerRadius="12dp"
+                android:textAllCaps="false"
+                android:layout_marginBottom="32dp"/>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

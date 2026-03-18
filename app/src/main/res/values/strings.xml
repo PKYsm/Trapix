@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Trapix</string>
+    <string name="tagline">Silent Guardian · Intruder Catcher</string>
+    <string name="setup_lock_title">Secure Your App</string>
+    <string name="lock_screen_title">Unlock Trapix</string>
+    <string name="wrong_attempt">Wrong attempt!</string>
+    <string name="unlock_success">Welcome back!</string>
+    <string name="biometric_title">Trapix Unlock</string>
+    <string name="biometric_subtitle">Use fingerprint or face to unlock</string>
+    <string name="biometric_cancel">Use PIN</string>
+    <string name="settings_title">Settings</string>
+    <string name="no_captures_yet">No intruder captures yet.\nYour device is safe 🛡️</string>
+    <string name="captures_title">Intruder Captures</string>
+</resources>
