@@ -134,7 +134,6 @@
                 android:textColor="@color/trapix_text_primary"
                 android:imeOptions="actionDone"
                 android:imeActionLabel="Unlock"
-                android:inputType="textPassword"
                 android:textColor="@color/trapix_text_primary"/>
 
         </com.google.android.material.textfield.TextInputLayout>
