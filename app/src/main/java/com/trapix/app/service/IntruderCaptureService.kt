@@ -87,6 +87,8 @@ class IntruderCaptureService : LifecycleService() {
 
             if (useFront) {
                 captureWithCamera(CameraSelector.DEFAULT_FRONT_CAMERA, "front", attemptNumber, location)
+                // Small delay between cameras to allow proper unbind/rebind
+                kotlinx.coroutines.delay(500)
             }
             if (useRear) {
                 captureWithCamera(CameraSelector.DEFAULT_BACK_CAMERA, "rear", attemptNumber, location)

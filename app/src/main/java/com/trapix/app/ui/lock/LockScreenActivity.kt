@@ -126,12 +126,12 @@ class LockScreenActivity : AppCompatActivity() {
         binding.layoutPatternLock.visibility = View.GONE
         binding.layoutPasswordLock.visibility = View.VISIBLE
 
-        // Auto-focus and show native keyboard
+        // Auto-focus and force show native keyboard
         binding.etLockPassword.requestFocus()
-        val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-        binding.etLockPassword.postDelayed({
-            imm.showSoftInput(binding.etLockPassword, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT)
-        }, 200)
+        binding.etLockPassword.post {
+            val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
+            imm.showSoftInput(binding.etLockPassword, android.view.inputmethod.InputMethodManager.SHOW_FORCED)
+        }
 
         // Submit on IME Done/Enter key
         binding.etLockPassword.setOnEditorActionListener { _, _, _ ->

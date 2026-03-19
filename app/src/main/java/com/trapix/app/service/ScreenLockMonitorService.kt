@@ -24,9 +24,12 @@ class ScreenLockMonitorService : AccessibilityService() {
         )
         // Text hints that indicate wrong attempt on lock screen
         private val WRONG_ATTEMPT_HINTS = setOf(
-            "wrong", "incorrect", "try again", "attempt",
-            "galat", "dobara", "failed", "error",
-            "last attempt", "remaining"
+            "wrong password", "wrong pin", "wrong pattern",
+            "incorrect password", "incorrect pin",
+            "try again", "attempts remaining",
+            "galat password", "galat pin",
+            "last attempt", "phone will be wiped",
+            "too many attempts"
         )
     }
 
@@ -53,6 +56,9 @@ class ScreenLockMonitorService : AccessibilityService() {
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return
         val pkg = event.packageName?.toString() ?: return
+
+        // Ignore Trapix own package - prevent self-triggering
+        if (pkg.startsWith("com.trapix")) return
 
         // Only care about lock screen packages
         if (!LOCK_SCREEN_PACKAGES.contains(pkg)) return

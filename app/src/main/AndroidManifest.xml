@@ -61,7 +61,7 @@
             android:name=".ui.lock.LockScreenActivity"
             android:exported="false"
             android:screenOrientation="portrait"
-            android:windowSoftInputMode="adjustResize"
+            android:windowSoftInputMode="stateVisible|adjustResize"
             android:showWhenLocked="true"
             android:turnScreenOn="true" />
 
