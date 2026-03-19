@@ -23,6 +23,7 @@ import com.trapix.app.data.db.AppDatabase
 import com.trapix.app.data.model.IntruderLog
 import com.trapix.app.data.prefs.AppPrefs
 import com.trapix.app.ui.gallery.MainActivity
+import com.trapix.app.util.DebugLogger
 import kotlinx.coroutines.*
 import java.io.File
 import java.io.FileOutputStream

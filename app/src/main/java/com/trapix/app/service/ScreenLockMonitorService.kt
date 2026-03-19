@@ -103,7 +103,7 @@ class ScreenLockMonitorService : AccessibilityService() {
     private fun scanWindowForErrors(now: Long) {
         try {
             val root = rootInActiveWindow ?: return
-            val matched = findErrorText(root, "")
+            val matched = findErrorText(root, 0)
             root.recycle()
             if (matched != null && now - lastCaptureTime >= CAPTURE_COOLDOWN_MS) {
                 DebugLogger.log(TAG, "WRONG ATTEMPT via window scan! matched='$matched'")
