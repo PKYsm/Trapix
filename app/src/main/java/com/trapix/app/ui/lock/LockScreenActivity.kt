@@ -15,6 +15,7 @@ import com.trapix.app.data.prefs.AppPrefs
 import com.trapix.app.databinding.ActivityLockScreenBinding
 import com.trapix.app.service.IntruderCaptureService
 import com.trapix.app.ui.gallery.MainActivity
+import com.trapix.app.util.DebugLogger
 
 class LockScreenActivity : AppCompatActivity() {
 
@@ -30,7 +31,7 @@ class LockScreenActivity : AppCompatActivity() {
         prefs = AppPrefs(this)
 
         wrongAttempts = 0
-        com.trapix.app.util.DebugLogger.log("LOCK", "LockScreen opened. lockType=${prefs.lockType}, threshold=${prefs.wrongAttemptThreshold}")
+        DebugLogger.log("LOCK", "LockScreen opened. lockType=${prefs.lockType}, threshold=${prefs.wrongAttemptThreshold}")
         setupLockUI()
         setupBiometric()
     }
@@ -69,9 +70,8 @@ class LockScreenActivity : AppCompatActivity() {
         if (enteredPin.length < 6) {
             enteredPin += digit
             updateLockPinDots()
-            // Auto-check when PIN length matches saved PIN length
             if (enteredPin.length == prefs.lockValue.length && prefs.lockValue.isNotEmpty()) {
-                android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ checkPin() }, 150)
+                Handler(Looper.getMainLooper()).postDelayed({ checkPin() }, 150)
             }
         }
     }
@@ -90,7 +90,7 @@ class LockScreenActivity : AppCompatActivity() {
     }
 
     private fun checkPin() {
-        com.trapix.app.util.DebugLogger.log("LOCK", "PIN check: entered=${enteredPin.length} chars, stored=${prefs.lockValue.length} chars")
+        DebugLogger.log("LOCK", "PIN check: entered=${enteredPin.length} chars, stored=${prefs.lockValue.length} chars")
         if (enteredPin == prefs.lockValue) {
             unlockSuccess()
         } else {
@@ -105,13 +105,30 @@ class LockScreenActivity : AppCompatActivity() {
         binding.layoutPinLock.visibility = View.GONE
         binding.layoutPatternLock.visibility = View.VISIBLE
         binding.layoutPasswordLock.visibility = View.GONE
-        com.trapix.app.util.DebugLogger.log("LOCK", "Pattern view shown. Stored pattern=${prefs.lockValue}")
+        DebugLogger.log("LOCK", "Pattern view shown. Stored pattern=${prefs.lockValue}")
+
+        // BUG 2 FIX: onTooFewNodes callback set karo — user ko feedback dena zaroori hai
+        binding.lockPatternView.onTooFewNodes = {
+            Toast.makeText(this, "Draw at least 4 dots", Toast.LENGTH_SHORT).show()
+        }
 
         binding.lockPatternView.onPatternListener = object : PatternView.OnPatternListener {
             override fun onPatternStart() {}
+
             override fun onPatternComplete(pattern: List<Int>) {
+                // BUG 2 FIX: onPatternComplete ke andar bhi size check karo.
+                // Agar pehle 1-node pattern save tha (min-4 check se pehle),
+                // to bhi unlock nahi hona chahiye — minimum 4 nodes enforce karo.
+                if (pattern.size < 4) {
+                    DebugLogger.log("LOCK", "Pattern rejected: too few nodes (${pattern.size} < 4)")
+                    binding.lockPatternView.setError()
+                    Toast.makeText(this@LockScreenActivity, "Draw at least 4 dots", Toast.LENGTH_SHORT).show()
+                    return
+                }
+
                 val patternStr = pattern.joinToString(",")
-                com.trapix.app.util.DebugLogger.log("LOCK", "Pattern entered=$patternStr, expected=${prefs.lockValue}, match=${patternStr == prefs.lockValue}")
+                DebugLogger.log("LOCK", "Pattern entered=$patternStr, expected=${prefs.lockValue}, match=${patternStr == prefs.lockValue}")
+
                 if (patternStr == prefs.lockValue) {
                     binding.lockPatternView.setSuccess()
                     unlockSuccess()
@@ -129,30 +146,25 @@ class LockScreenActivity : AppCompatActivity() {
         binding.layoutPatternLock.visibility = View.GONE
         binding.layoutPasswordLock.visibility = View.VISIBLE
 
-        // Auto-focus and force show native keyboard
         binding.etLockPassword.requestFocus()
         binding.etLockPassword.post {
             val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
             imm.showSoftInput(binding.etLockPassword, android.view.inputmethod.InputMethodManager.SHOW_FORCED)
         }
 
-        // Submit on IME Done/Enter key
         binding.etLockPassword.setOnEditorActionListener { _, _, _ ->
-            checkPassword()
-            true
+            checkPassword(); true
         }
 
-        // Also submit button as fallback
         binding.btnPasswordUnlock.setOnClickListener { checkPassword() }
 
-        // Auto-submit when length matches
         binding.etLockPassword.addTextChangedListener(object : android.text.TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: android.text.Editable?) {
                 val entered = s?.toString() ?: return
                 if (entered.length == prefs.lockValue.length && prefs.lockValue.isNotEmpty()) {
-                    android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ checkPassword() }, 150)
+                    Handler(Looper.getMainLooper()).postDelayed({ checkPassword() }, 150)
                 }
             }
         })
@@ -161,7 +173,6 @@ class LockScreenActivity : AppCompatActivity() {
     private fun checkPassword() {
         val entered = binding.etLockPassword.text.toString()
         if (entered.isEmpty()) return
-        // Hide keyboard
         val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
         imm.hideSoftInputFromWindow(binding.etLockPassword.windowToken, 0)
         if (entered == prefs.lockValue) {
@@ -191,8 +202,6 @@ class LockScreenActivity : AppCompatActivity() {
 
         binding.btnBiometric.visibility = View.VISIBLE
         binding.btnBiometric.setOnClickListener { showBiometricPrompt() }
-
-        // Auto show biometric prompt on open
         Handler(Looper.getMainLooper()).postDelayed({ showBiometricPrompt() }, 500)
     }
 
@@ -202,14 +211,9 @@ class LockScreenActivity : AppCompatActivity() {
             override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
                 unlockSuccess()
             }
-
-            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                // User cancelled or error — just show lock
-            }
-
+            override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {}
             override fun onAuthenticationFailed() {
-                Toast.makeText(this@LockScreenActivity,
-                    "Biometric not recognized", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this@LockScreenActivity, "Biometric not recognized", Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -225,14 +229,12 @@ class LockScreenActivity : AppCompatActivity() {
     // ─── Wrong Attempt Handler ────────────────────────────────────────────────
     private fun handleWrongAttempt() {
         wrongAttempts++
-        com.trapix.app.util.DebugLogger.log("LOCK", "WRONG ATTEMPT #$wrongAttempts / threshold=${prefs.wrongAttemptThreshold}")
+        DebugLogger.log("LOCK", "WRONG ATTEMPT #$wrongAttempts / threshold=${prefs.wrongAttemptThreshold}")
         val threshold = prefs.wrongAttemptThreshold
         val remaining = threshold - wrongAttempts
 
-        // Shake animation on UI
         binding.root.startAnimation(android.view.animation.AnimationUtils.loadAnimation(this, R.anim.shake))
 
-        // Toast with remaining attempts info
         val message = if (remaining > 0) {
             "Wrong! $remaining attempt${if (remaining == 1) "" else "s"} remaining before capture 📸"
         } else {
@@ -240,16 +242,15 @@ class LockScreenActivity : AppCompatActivity() {
         }
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
 
-        // Capture if threshold reached
         if (wrongAttempts >= threshold) {
-            prefs.wrongAttemptCount++ // Only increment here, right before capture
+            prefs.wrongAttemptCount++
             triggerCapture()
-            wrongAttempts = 0 // Reset local counter after capture
+            wrongAttempts = 0
         }
     }
 
     private fun triggerCapture() {
-        com.trapix.app.util.DebugLogger.log("LOCK", "TRIGGERING CAPTURE! attemptCount=${prefs.wrongAttemptCount}")
+        DebugLogger.log("LOCK", "TRIGGERING CAPTURE! attemptCount=${prefs.wrongAttemptCount}")
         val intent = Intent(this, IntruderCaptureService::class.java).apply {
             action = IntruderCaptureService.ACTION_CAPTURE
             putExtra(IntruderCaptureService.EXTRA_ATTEMPT_NUMBER, prefs.wrongAttemptCount)
@@ -259,7 +260,7 @@ class LockScreenActivity : AppCompatActivity() {
 
     // ─── Unlock ─────────────────────────────────────────────────────────────
     private fun unlockSuccess() {
-        com.trapix.app.util.DebugLogger.log("LOCK", "UNLOCK SUCCESS!")
+        DebugLogger.log("LOCK", "UNLOCK SUCCESS!")
         prefs.resetWrongAttemptCount()
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
@@ -268,9 +269,7 @@ class LockScreenActivity : AppCompatActivity() {
         finish()
     }
 
-    // Back press should NOT dismiss the lock screen
     override fun onBackPressed() {
-        // Do nothing — user cannot dismiss lock
+        // Lock screen dismiss nahi hona chahiye
     }
 }
-
