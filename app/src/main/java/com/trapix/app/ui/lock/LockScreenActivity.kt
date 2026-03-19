@@ -152,27 +152,12 @@ class LockScreenActivity : AppCompatActivity() {
             }
         }
 
+        // Sirf Enter key aur button — TextWatcher auto-submit hata diya (crash ka root cause tha)
         binding.etLockPassword.setOnEditorActionListener { _, _, _ ->
             checkPassword()
             true
         }
-
         binding.btnPasswordUnlock.setOnClickListener { checkPassword() }
-
-        // Auto-submit jab length match kare
-        binding.etLockPassword.addTextChangedListener(object : android.text.TextWatcher {
-            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
-            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: android.text.Editable?) {
-                if (isUnlocking) return
-                val len = s?.length ?: 0
-                if (len > 0 && len == prefs.lockValue.length && prefs.lockValue.isNotEmpty()) {
-                    Handler(Looper.getMainLooper()).postDelayed({
-                        checkPassword()
-                    }, 200)
-                }
-            }
-        })
     }
 
     private fun checkPassword() {
