@@ -57,6 +57,7 @@ class IntruderCaptureService : LifecycleService() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
         
+        com.trapix.app.util.DebugLogger.log("CAMERA", "onStartCommand called. isCapturing=$isCapturing, attempt=${ intent?.getIntExtra(EXTRA_ATTEMPT_NUMBER, 1) }")
         // Prevent duplicate captures running simultaneously
         if (isCapturing) {
             stopSelf()
@@ -84,6 +85,7 @@ class IntruderCaptureService : LifecycleService() {
 
         serviceScope.launch {
             val location = getLastKnownLocation()
+            com.trapix.app.util.DebugLogger.log("CAMERA", "Capture start: front=$useFront rear=$useRear location=${location?.latitude},${location?.longitude}")
 
             if (useFront) {
                 captureWithCamera(CameraSelector.DEFAULT_FRONT_CAMERA, "front", attemptNumber, location)
@@ -132,6 +134,7 @@ class IntruderCaptureService : LifecycleService() {
                         object : ImageCapture.OnImageSavedCallback {
                             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
                                 serviceScope.launch {
+                                    com.trapix.app.util.DebugLogger.log("CAMERA", "Photo saved: ${outputFile.absolutePath} size=${outputFile.length()/1024}KB")
                                     val log = IntruderLog(
                                         imagePath = outputFile.absolutePath,
                                         timestamp = System.currentTimeMillis(),
@@ -159,6 +162,7 @@ class IntruderCaptureService : LifecycleService() {
                             }
 
                             override fun onError(exception: ImageCaptureException) {
+                                com.trapix.app.util.DebugLogger.error("CAMERA", "Capture FAILED: ${exception.message} code=${exception.imageCaptureError}")
                                 Log.e(TAG, "Capture error: ${exception.message}")
                                 cameraProvider.unbindAll()
                                 continuation.resume(Unit) {}

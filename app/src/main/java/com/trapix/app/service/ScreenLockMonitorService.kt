@@ -50,7 +50,8 @@ class ScreenLockMonitorService : AccessibilityService() {
             notificationTimeout = 100
         }
         serviceInfo = info
-        Log.d(TAG, "ScreenLockMonitorService connected")
+Log.d(TAG, "ScreenLockMonitorService connected")
+        com.trapix.app.util.DebugLogger.log("MONITOR", "AccessibilityService connected!")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
@@ -59,6 +60,7 @@ class ScreenLockMonitorService : AccessibilityService() {
 
         // Ignore Trapix own package - prevent self-triggering
         if (pkg.startsWith("com.trapix")) return
+        com.trapix.app.util.DebugLogger.log("MONITOR", "Event from pkg=$pkg type=${event.eventType}")
 
         // Only care about lock screen packages
         if (!LOCK_SCREEN_PACKAGES.contains(pkg)) return
@@ -79,7 +81,8 @@ class ScreenLockMonitorService : AccessibilityService() {
             return
         }
 
-        Log.d(TAG, "Wrong lock attempt detected via event text: $combined")
+Log.d(TAG, "Wrong lock attempt detected via event text: $combined")
+        com.trapix.app.util.DebugLogger.log("MONITOR", "WRONG ATTEMPT DETECTED! text=$combined")
         triggerCapture()
         lastCaptureTime = now
     }

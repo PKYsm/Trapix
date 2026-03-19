@@ -24,8 +24,10 @@ class SplashActivity : AppCompatActivity() {
 
         prefs = AppPrefs(this)
 
+        com.trapix.app.util.DebugLogger.log("SPLASH", "App opened. isSetupDone=${prefs.isSetupDone}, lockType=${prefs.lockType}")
         // Reset wrong attempt count on every fresh app open
         prefs.resetWrongAttemptCount()
+        com.trapix.app.util.DebugLogger.log("SPLASH", "wrongAttemptCount reset to 0")
 
         // Animate logo
         val fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in)
@@ -58,8 +60,10 @@ class SplashActivity : AppCompatActivity() {
 
     private fun navigateNext() {
         val intent = if (!prefs.isSetupDone) {
+            com.trapix.app.util.DebugLogger.log("SPLASH", "Navigating to SetupLock")
             Intent(this, SetupLockActivity::class.java)
         } else {
+            com.trapix.app.util.DebugLogger.log("SPLASH", "Navigating to LockScreen")
             Intent(this, LockScreenActivity::class.java)
         }
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

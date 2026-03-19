@@ -30,7 +30,7 @@ class LockScreenActivity : AppCompatActivity() {
         prefs = AppPrefs(this)
 
         wrongAttempts = 0
-
+        com.trapix.app.util.DebugLogger.log("LOCK", "LockScreen opened. lockType=${prefs.lockType}, threshold=${prefs.wrongAttemptThreshold}")
         setupLockUI()
         setupBiometric()
     }
@@ -90,6 +90,7 @@ class LockScreenActivity : AppCompatActivity() {
     }
 
     private fun checkPin() {
+        com.trapix.app.util.DebugLogger.log("LOCK", "PIN check: entered=${enteredPin.length} chars, stored=${prefs.lockValue.length} chars")
         if (enteredPin == prefs.lockValue) {
             unlockSuccess()
         } else {
@@ -222,6 +223,7 @@ class LockScreenActivity : AppCompatActivity() {
     // ─── Wrong Attempt Handler ────────────────────────────────────────────────
     private fun handleWrongAttempt() {
         wrongAttempts++
+        com.trapix.app.util.DebugLogger.log("LOCK", "WRONG ATTEMPT #$wrongAttempts / threshold=${prefs.wrongAttemptThreshold}")
         val threshold = prefs.wrongAttemptThreshold
         val remaining = threshold - wrongAttempts
 
@@ -245,6 +247,7 @@ class LockScreenActivity : AppCompatActivity() {
     }
 
     private fun triggerCapture() {
+        com.trapix.app.util.DebugLogger.log("LOCK", "TRIGGERING CAPTURE! attemptCount=${prefs.wrongAttemptCount}")
         val intent = Intent(this, IntruderCaptureService::class.java).apply {
             action = IntruderCaptureService.ACTION_CAPTURE
             putExtra(IntruderCaptureService.EXTRA_ATTEMPT_NUMBER, prefs.wrongAttemptCount)
@@ -254,6 +257,7 @@ class LockScreenActivity : AppCompatActivity() {
 
     // ─── Unlock ─────────────────────────────────────────────────────────────
     private fun unlockSuccess() {
+        com.trapix.app.util.DebugLogger.log("LOCK", "UNLOCK SUCCESS!")
         prefs.resetWrongAttemptCount()
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK

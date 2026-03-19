@@ -120,6 +120,10 @@ class SettingsActivity : AppCompatActivity() {
         binding.tvInstagram.setOnClickListener { openUrl("https://instagram.com/RasaVedic") }
 
         // Reset all settings
+        binding.btnOpenDebugLogs.setOnClickListener {
+            startActivity(android.content.Intent(this, com.trapix.app.ui.debug.DebugActivity::class.java))
+        }
+
         binding.btnResetSettings.setOnClickListener {
             AlertDialog.Builder(this)
                 .setTitle("Reset All Settings?")

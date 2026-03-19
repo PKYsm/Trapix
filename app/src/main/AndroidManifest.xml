@@ -84,6 +84,12 @@
             android:exported="false"
             android:screenOrientation="portrait" />
 
+        <!-- Debug Log Viewer -->
+        <activity
+            android:name=".ui.debug.DebugActivity"
+            android:exported="false"
+            android:screenOrientation="portrait"/>
+
         <!-- Settings Activity -->
         <activity
             android:name=".ui.settings.SettingsActivity"

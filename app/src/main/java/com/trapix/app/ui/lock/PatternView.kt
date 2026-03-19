@@ -66,6 +66,7 @@ class PatternView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldW: Int, oldH: Int) {
         super.onSizeChanged(w, h, oldW, oldH)
         recalculate(w, h)
+        com.trapix.app.util.DebugLogger.log("PATTERN", "onSizeChanged: w=$w h=$h cellSize=$cellSize touchRadius=$touchRadius")
     }
 
     private fun recalculate(w: Int, h: Int) {
@@ -159,6 +160,7 @@ class PatternView @JvmOverloads constructor(
                 isDrawing = true
                 currentTouchX = event.x
                 currentTouchY = event.y
+                com.trapix.app.util.DebugLogger.log("PATTERN", "Touch DOWN at x=${event.x.toInt()} y=${event.y.toInt()}, viewSize=${width}x${height}, touchRadius=$touchRadius")
                 onPatternListener?.onPatternStart()
                 checkNodeHit(event.x, event.y)
                 invalidate()
@@ -173,6 +175,7 @@ class PatternView @JvmOverloads constructor(
             }
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                 isDrawing = false
+                com.trapix.app.util.DebugLogger.log("PATTERN", "Touch UP, nodes selected: ${selectedNodes.size} -> $selectedNodes")
                 if (selectedNodes.isNotEmpty()) {
                     onPatternListener?.onPatternComplete(selectedNodes.toList())
                 }
@@ -191,6 +194,7 @@ class PatternView @JvmOverloads constructor(
             val dy = y - pos.y
             val dist = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
             if (dist <= touchRadius) {
+                com.trapix.app.util.DebugLogger.log("PATTERN", "Node $i HIT! dist=${"%.1f".format(dist)}, touchRadius=${"%.1f".format(touchRadius)}")
                 selectedNodes.add(i)
                 invalidate()
             }

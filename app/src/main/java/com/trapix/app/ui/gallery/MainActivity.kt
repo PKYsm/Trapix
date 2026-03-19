@@ -110,6 +110,11 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, SettingsActivity::class.java))
             overridePendingTransition(R.anim.slide_in_right, R.anim.fade_out)
         }
+        // Long press FAB = open debug logs
+        binding.fabSettings.setOnLongClickListener {
+            startActivity(Intent(this, com.trapix.app.ui.debug.DebugActivity::class.java))
+            true
+        }
     }
 
     private fun showImageDetail(log: com.trapix.app.data.model.IntruderLog) {
