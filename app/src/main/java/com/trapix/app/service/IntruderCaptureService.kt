@@ -150,16 +150,16 @@ class IntruderCaptureService : LifecycleService() {
                 val future = ProcessCameraProvider.getInstance(this)
                 future.addListener({
                     try {
-                        cont.resume(future.get())
+                        cont.resume(future.get()) {}
                     } catch (e: Exception) {
                         DebugLogger.error(TAG, "CameraProvider.get() failed: ${e.message}")
-                        if (cont.isActive) cont.resume(null)
+                        if (cont.isActive) cont.resume(null) {}
                     }
                 }, ContextCompat.getMainExecutor(this))
                 cont.invokeOnCancellation { future.cancel(true) }
             } catch (e: Exception) {
                 DebugLogger.error(TAG, "getCameraProvider exception: ${e.message}")
-                if (cont.isActive) cont.resume(null)
+                if (cont.isActive) cont.resume(null) {}
             }
         }
 
@@ -176,7 +176,7 @@ class IntruderCaptureService : LifecycleService() {
         location: Location?
     ): Boolean = suspendCancellableCoroutine { cont ->
         fun safeResume(value: Boolean) {
-            if (cont.isActive) cont.resume(value)
+            if (cont.isActive) cont.resume(value) {}
         }
 
         try {
