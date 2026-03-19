@@ -2,18 +2,20 @@ package com.trapix.app.service
 
 import android.accessibilityservice.AccessibilityService
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.app.KeyguardManager
+import android.content.Context
 import android.content.Intent
 import android.util.Log
 import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import com.trapix.app.data.prefs.AppPrefs
+import com.trapix.app.util.DebugLogger
 
 class ScreenLockMonitorService : AccessibilityService() {
 
     companion object {
         const val TAG = "ScreenLockMonitor"
-        // Packages that handle lock screen on various manufacturers
-        private val LOCK_SCREEN_PACKAGES = setOf(
+        private val KEYGUARD_PACKAGES = setOf(
             "com.android.systemui",
             "com.android.keyguard",
             "com.samsung.android.keyguard",
@@ -22,24 +24,25 @@ class ScreenLockMonitorService : AccessibilityService() {
             "com.oppo.keyguard",
             "com.realme.keyguard"
         )
-        // Text hints that indicate wrong attempt on lock screen
-        private val WRONG_ATTEMPT_HINTS = setOf(
+        private val WRONG_ATTEMPT_HINTS = listOf(
             "wrong password", "wrong pin", "wrong pattern",
             "incorrect password", "incorrect pin",
             "try again", "attempts remaining",
             "galat password", "galat pin",
             "last attempt", "phone will be wiped",
-            "too many attempts"
+            "too many attempts", "incorrect attempt"
         )
     }
 
     private lateinit var prefs: AppPrefs
+    private lateinit var keyguardManager: KeyguardManager
     private var lastCaptureTime = 0L
-    private val CAPTURE_COOLDOWN_MS = 3000L // 3 seconds between captures
+    private val CAPTURE_COOLDOWN_MS = 4000L
 
     override fun onServiceConnected() {
         super.onServiceConnected()
         prefs = AppPrefs(this)
+        keyguardManager = getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
         val info = AccessibilityServiceInfo().apply {
             eventTypes = AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED or
                     AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED or
@@ -47,78 +50,88 @@ class ScreenLockMonitorService : AccessibilityService() {
             feedbackType = AccessibilityServiceInfo.FEEDBACK_GENERIC
             flags = AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS or
                     AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS
-            notificationTimeout = 100
+            notificationTimeout = 200
         }
         serviceInfo = info
-Log.d(TAG, "ScreenLockMonitorService connected")
-        com.trapix.app.util.DebugLogger.log("MONITOR", "AccessibilityService connected!")
+        DebugLogger.log(TAG, "Service connected! Ready to monitor.")
     }
 
     override fun onAccessibilityEvent(event: AccessibilityEvent?) {
         event ?: return
         val pkg = event.packageName?.toString() ?: return
 
-        // Ignore Trapix own package - prevent self-triggering
+        // Ignore Trapix itself
         if (pkg.startsWith("com.trapix")) return
-        com.trapix.app.util.DebugLogger.log("MONITOR", "Event from pkg=$pkg type=${event.eventType}")
 
-        // Only care about lock screen packages
-        if (!LOCK_SCREEN_PACKAGES.contains(pkg)) return
+        // CRITICAL: Only process when phone is ACTUALLY locked
+        val isLocked = keyguardManager.isKeyguardLocked
+        if (!isLocked) {
+            // Phone is unlocked - ignore all events
+            return
+        }
+
+        // Only care about keyguard/systemui packages
+        if (!KEYGUARD_PACKAGES.contains(pkg)) return
 
         val now = System.currentTimeMillis()
         if (now - lastCaptureTime < CAPTURE_COOLDOWN_MS) return
 
-        // Check event text for wrong attempt hints
+        DebugLogger.log(TAG, "Phone IS locked. Event from $pkg type=${event.eventType}")
+
+        // Check event text
         val eventText = event.text?.joinToString(" ")?.lowercase() ?: ""
         val contentDesc = event.contentDescription?.toString()?.lowercase() ?: ""
         val combined = "$eventText $contentDesc"
 
-        val isWrongAttempt = WRONG_ATTEMPT_HINTS.any { combined.contains(it) }
-
-        if (!isWrongAttempt) {
-            // Also scan window content for error messages
-            scanWindowForErrors(event)
-            return
+        if (combined.isNotBlank() && combined.length > 2) {
+            val matched = WRONG_ATTEMPT_HINTS.find { combined.contains(it) }
+            if (matched != null) {
+                DebugLogger.log(TAG, "WRONG ATTEMPT via text! matched='$matched' in '$combined'")
+                triggerCapture()
+                lastCaptureTime = now
+                return
+            }
         }
 
-Log.d(TAG, "Wrong lock attempt detected via event text: $combined")
-        com.trapix.app.util.DebugLogger.log("MONITOR", "WRONG ATTEMPT DETECTED! text=$combined")
-        triggerCapture()
-        lastCaptureTime = now
+        // Scan window content
+        if (event.eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||
+            event.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            scanWindowForErrors(now)
+        }
     }
 
-    private fun scanWindowForErrors(event: AccessibilityEvent) {
+    private fun scanWindowForErrors(now: Long) {
         try {
             val root = rootInActiveWindow ?: return
-            val found = findErrorText(root)
+            val matched = findErrorText(root, "")
             root.recycle()
-            if (found) {
-                val now = System.currentTimeMillis()
-                if (now - lastCaptureTime >= CAPTURE_COOLDOWN_MS) {
-                    Log.d(TAG, "Wrong lock attempt detected via window scan")
-                    triggerCapture()
-                    lastCaptureTime = now
-                }
+            if (matched != null && now - lastCaptureTime >= CAPTURE_COOLDOWN_MS) {
+                DebugLogger.log(TAG, "WRONG ATTEMPT via window scan! matched='$matched'")
+                triggerCapture()
+                lastCaptureTime = now
             }
         } catch (e: Exception) {
-            Log.e(TAG, "scanWindowForErrors error: ${e.message}")
+            DebugLogger.error(TAG, "scanWindow error: ${e.message}")
         }
     }
 
-    private fun findErrorText(node: AccessibilityNodeInfo?): Boolean {
-        node ?: return false
+    private fun findErrorText(node: AccessibilityNodeInfo?, depth: Int): String? {
+        if (node == null || depth > 6) return null
         val text = node.text?.toString()?.lowercase() ?: ""
         val desc = node.contentDescription?.toString()?.lowercase() ?: ""
         val combined = "$text $desc"
-        if (WRONG_ATTEMPT_HINTS.any { combined.contains(it) }) return true
+        val matched = WRONG_ATTEMPT_HINTS.find { combined.contains(it) }
+        if (matched != null) return matched
         for (i in 0 until node.childCount) {
-            if (findErrorText(node.getChild(i))) return true
+            val result = findErrorText(node.getChild(i), depth + 1)
+            if (result != null) return result
         }
-        return false
+        return null
     }
 
     private fun triggerCapture() {
         prefs.wrongAttemptCount++
+        DebugLogger.log(TAG, "Triggering capture! total count=${prefs.wrongAttemptCount}")
         val intent = Intent(this, IntruderCaptureService::class.java).apply {
             action = IntruderCaptureService.ACTION_CAPTURE
             putExtra(IntruderCaptureService.EXTRA_ATTEMPT_NUMBER, prefs.wrongAttemptCount)
@@ -127,6 +140,7 @@ Log.d(TAG, "Wrong lock attempt detected via event text: $combined")
     }
 
     override fun onInterrupt() {
-        Log.d(TAG, "ScreenLockMonitorService interrupted")
+        DebugLogger.log(TAG, "Service interrupted!")
     }
 }
+

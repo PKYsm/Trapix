@@ -105,11 +105,13 @@ class LockScreenActivity : AppCompatActivity() {
         binding.layoutPinLock.visibility = View.GONE
         binding.layoutPatternLock.visibility = View.VISIBLE
         binding.layoutPasswordLock.visibility = View.GONE
+        com.trapix.app.util.DebugLogger.log("LOCK", "Pattern view shown. Stored pattern=${prefs.lockValue}")
 
         binding.lockPatternView.onPatternListener = object : PatternView.OnPatternListener {
             override fun onPatternStart() {}
             override fun onPatternComplete(pattern: List<Int>) {
                 val patternStr = pattern.joinToString(",")
+                com.trapix.app.util.DebugLogger.log("LOCK", "Pattern entered=$patternStr, expected=${prefs.lockValue}, match=${patternStr == prefs.lockValue}")
                 if (patternStr == prefs.lockValue) {
                     binding.lockPatternView.setSuccess()
                     unlockSuccess()
@@ -271,3 +273,4 @@ class LockScreenActivity : AppCompatActivity() {
         // Do nothing — user cannot dismiss lock
     }
 }
+

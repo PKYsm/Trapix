@@ -16,13 +16,11 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="60dp">
-
         <ImageView
             android:layout_width="48dp"
             android:layout_height="48dp"
             android:src="@drawable/ic_shield"
             app:tint="@color/trapix_accent"/>
-
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -45,7 +43,6 @@
         app:layout_constraintBottom_toTopOf="@id/btnBiometric"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-
         <TextView
             android:id="@+id/tvLockPinDots"
             android:layout_width="wrap_content"
@@ -55,25 +52,21 @@
             android:textSize="32sp"
             android:letterSpacing="0.3"
             android:layout_marginBottom="28dp"/>
-
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtn1" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="1" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn2" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="2" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn3" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="3" android:layout_margin="4dp"/>
         </LinearLayout>
-
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtn4" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="4" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn5" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="5" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn6" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="6" android:layout_margin="4dp"/>
         </LinearLayout>
-
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtn7" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="7" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn8" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="8" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn9" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="9" android:layout_margin="4dp"/>
         </LinearLayout>
-
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtnBack" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="⌫" android:layout_margin="4dp" android:textColor="@color/trapix_text_secondary"/>
             <Button android:id="@+id/lockBtn0" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="0" android:layout_margin="4dp"/>
@@ -93,11 +86,13 @@
         app:layout_constraintBottom_toTopOf="@id/btnBiometric"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-
         <com.trapix.app.ui.lock.PatternView
             android:id="@+id/lockPatternView"
-            android:layout_width="280dp"
-            android:layout_height="280dp"/>
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:minHeight="250dp"
+            android:maxHeight="350dp"/>
     </LinearLayout>
 
     <LinearLayout
@@ -112,7 +107,6 @@
         app:layout_constraintBottom_toTopOf="@id/btnBiometric"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
-
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -121,16 +115,15 @@
             app:boxStrokeColor="@color/trapix_accent"
             app:boxBackgroundColor="@color/trapix_card"
             android:layout_marginBottom="20dp">
-
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etLockPassword"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPassword"
                 android:textColor="@color/trapix_text_primary"
-                android:imeOptions="actionDone"/>
+                android:imeOptions="actionDone"
+                android:imeActionLabel="Unlock"/>
         </com.google.android.material.textfield.TextInputLayout>
-
         <Button
             android:id="@+id/btnPasswordUnlock"
             style="@style/TrapixButton"

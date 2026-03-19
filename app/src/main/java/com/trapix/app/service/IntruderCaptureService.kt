@@ -110,20 +110,36 @@ class IntruderCaptureService : LifecycleService() {
         val mainHandler = Handler(Looper.getMainLooper())
         mainHandler.post {
             if (!hasCamera()) {
+                DebugLogger.error(TAG, "No camera permission for $cameraLabel!")
                 continuation.resume(Unit) {}
                 return@post
             }
 
+            DebugLogger.log(TAG, "Starting $cameraLabel camera capture...")
             val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
             cameraProviderFuture.addListener({
                 try {
                     val cameraProvider = cameraProviderFuture.get()
+                    
+                    // Check if this camera exists on device
+                    val availableCameras = cameraProvider.availableCameraInfos
+                    DebugLogger.log(TAG, "$cameraLabel: available cameras = ${availableCameras.size}")
+                    
                     val imageCapture = ImageCapture.Builder()
                         .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                         .build()
 
                     cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture)
+                    
+                    // Try to bind - this will throw if camera not available
+                    try {
+                        cameraProvider.bindToLifecycle(this, cameraSelector, imageCapture)
+                        DebugLogger.log(TAG, "$cameraLabel camera bound successfully")
+                    } catch (e: Exception) {
+                        DebugLogger.error(TAG, "$cameraLabel bind failed: ${e.message}")
+                        continuation.resume(Unit) {}
+                        return@addListener
+                    }
 
                     val outputFile = createImageFile(cameraLabel)
                     val outputOptions = ImageCapture.OutputFileOptions.Builder(outputFile).build()
@@ -133,6 +149,7 @@ class IntruderCaptureService : LifecycleService() {
                         ContextCompat.getMainExecutor(this),
                         object : ImageCapture.OnImageSavedCallback {
                             override fun onImageSaved(outputFileResults: ImageCapture.OutputFileResults) {
+                                DebugLogger.log(TAG, "$cameraLabel photo saved OK: ${outputFile.absolutePath}")
                                 serviceScope.launch {
                                     com.trapix.app.util.DebugLogger.log("CAMERA", "Photo saved: ${outputFile.absolutePath} size=${outputFile.length()/1024}KB")
                                     val log = IntruderLog(
@@ -276,3 +293,4 @@ class IntruderCaptureService : LifecycleService() {
         super.onDestroy()
     }
 }
+
