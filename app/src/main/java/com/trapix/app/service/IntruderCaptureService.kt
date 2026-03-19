@@ -145,7 +145,7 @@ class IntruderCaptureService : LifecycleService() {
      * ListenableFuture ke liye manual coroutine bridge (guava dependency nahi chahiye).
      */
     private suspend fun getCameraProvider(): ProcessCameraProvider? =
-        suspendCancellableCoroutine(onCancellation = { }) { cont ->
+        suspendCancellableCoroutine { cont ->
             try {
                 val future = ProcessCameraProvider.getInstance(this)
                 future.addListener({
@@ -174,7 +174,7 @@ class IntruderCaptureService : LifecycleService() {
         label: String,
         attempt: Int,
         location: Location?
-    ): Boolean = suspendCancellableCoroutine(onCancellation = { }) { cont ->
+    ): Boolean = suspendCancellableCoroutine { cont ->
         fun safeResume(value: Boolean) {
             if (cont.isActive) cont.resume(value)
         }
@@ -322,3 +322,4 @@ class IntruderCaptureService : LifecycleService() {
         super.onDestroy()
     }
 }
+
