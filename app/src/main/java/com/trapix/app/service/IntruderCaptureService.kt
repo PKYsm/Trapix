@@ -2,6 +2,7 @@ package com.trapix.app.service
 
 import android.Manifest
 import android.app.*
+import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,8 +10,8 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.location.Location
 import android.location.LocationManager
-import android.media.MediaScannerConnection
 import android.os.*
+import android.provider.MediaStore
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
@@ -32,11 +33,11 @@ import java.util.*
 class IntruderCaptureService : LifecycleService() {
 
     companion object {
-        const val TAG = "IntruderCapture"
-        const val CHANNEL_ID = "trapix_capture_channel"
+        const val TAG             = "IntruderCapture"
+        const val CHANNEL_ID      = "trapix_capture_channel"
         const val NOTIF_ID_CAPTURE = 1001
-        const val NOTIF_ID_ALERT = 1002
-        const val ACTION_CAPTURE = "com.trapix.app.ACTION_CAPTURE"
+        const val NOTIF_ID_ALERT  = 1002
+        const val ACTION_CAPTURE  = "com.trapix.app.ACTION_CAPTURE"
         const val EXTRA_ATTEMPT_NUMBER = "attempt_number"
 
         @Volatile var isCapturing = false
@@ -49,7 +50,7 @@ class IntruderCaptureService : LifecycleService() {
     override fun onCreate() {
         super.onCreate()
         prefs = AppPrefs(this)
-        db = AppDatabase.getInstance(this)
+        db    = AppDatabase.getInstance(this)
         createNotificationChannel()
     }
 
@@ -59,9 +60,8 @@ class IntruderCaptureService : LifecycleService() {
         DebugLogger.log(TAG, "onStartCommand: isCapturing=$isCapturing attempt=$attemptNumber")
 
         if (isCapturing) {
-            DebugLogger.log(TAG, "Already capturing, skipping.")
-            stopSelf()
-            return START_NOT_STICKY
+            DebugLogger.log(TAG, "Already capturing, skip.")
+            stopSelf(); return START_NOT_STICKY
         }
 
         isCapturing = true
@@ -70,80 +70,58 @@ class IntruderCaptureService : LifecycleService() {
         return START_NOT_STICKY
     }
 
-    /**
-     * BUG 3 FIX: Nested callbacks ki jagah coroutines use karo.
-     * suspendCancellableCoroutine ensure karta hai ki front complete hone ke BAAD
-     * hi rear start ho. Pehle wali callback chain mein rear kabhi kabhi miss ho jaati thi.
-     */
     private fun startCaptureSequence(attemptNumber: Int) {
         serviceScope.launch {
             val useFront = prefs.captureFrontCamera
-            val useRear = prefs.captureRearCamera
+            val useRear  = prefs.captureRearCamera
             val location = withContext(Dispatchers.IO) { getLastKnownLocation() }
 
             DebugLogger.log(TAG, "Capture sequence: front=$useFront rear=$useRear attempt=$attemptNumber")
 
-            if (!useFront && !useRear) {
-                DebugLogger.log(TAG, "No camera selected in settings.")
-                finish()
-                return@launch
-            }
+            if (!useFront && !useRear) { DebugLogger.log(TAG, "No camera selected."); finish(); return@launch }
+            if (!hasCamera())          { DebugLogger.error(TAG, "CAMERA PERMISSION MISSING!"); finish(); return@launch }
 
-            if (!hasCamera()) {
-                DebugLogger.error(TAG, "CAMERA PERMISSION MISSING! Cannot capture.")
-                finish()
-                return@launch
-            }
-
-            // CameraProvider ek baar lo, dono cameras ke liye reuse karo
             val provider = getCameraProvider()
-            if (provider == null) {
-                DebugLogger.error(TAG, "CameraProvider init failed!")
-                finish()
-                return@launch
+            if (provider == null) { DebugLogger.error(TAG, "CameraProvider init failed!"); finish(); return@launch }
+
+            // ── FRONT ─────────────────────────────────────────────────────────
+            var lastSavedFile: File? = null
+            if (useFront) {
+                DebugLogger.log(TAG, ">>> FRONT capture start")
+                val file = captureSingle(provider, CameraSelector.DEFAULT_FRONT_CAMERA, "front", attemptNumber, location)
+                DebugLogger.log(TAG, "<<< FRONT done. saved=${file != null}")
+                if (file != null) lastSavedFile = file
+                if (useRear) { DebugLogger.log(TAG, "Waiting 1500ms..."); delay(1500L) }
             }
 
-            // ── FRONT CAMERA ──────────────────────────────────────────────────
-            if (useFront) {
-                DebugLogger.log(TAG, ">>> Starting FRONT camera capture...")
-                val frontSuccess = captureSingle(
-                    provider = provider,
-                    selector = CameraSelector.DEFAULT_FRONT_CAMERA,
-                    label = "front",
-                    attempt = attemptNumber,
-                    location = location
-                )
-                DebugLogger.log(TAG, "<<< FRONT capture done. success=$frontSuccess")
+            // ── REAR ──────────────────────────────────────────────────────────
+            // BUG 6 FIX: rear off hone par front dobara nahi leni chahiye
+            // ab ye sirf useRear=true hone par hi chalega
+            if (useRear) {
+                DebugLogger.log(TAG, ">>> REAR capture start")
+                val file = captureSingle(provider, CameraSelector.DEFAULT_BACK_CAMERA, "rear", attemptNumber, location)
+                DebugLogger.log(TAG, "<<< REAR done. saved=${file != null}")
+                if (file != null) lastSavedFile = file
+            }
 
-                // Rear se pehle thoda wait karo (camera release hone ka time)
-                if (useRear) {
-                    DebugLogger.log(TAG, "Waiting 1500ms before rear camera...")
-                    delay(1500L)
+            // BUG 4 FIX: Screen locked hai to notification defer karo
+            // Screen unlock hone pe ScreenUnlockReceiver send karega
+            if (prefs.notificationEnabled && lastSavedFile != null) {
+                val km = getSystemService(Context.KEYGUARD_SERVICE) as android.app.KeyguardManager
+                if (km.isKeyguardLocked) {
+                    DebugLogger.log(TAG, "Screen locked — deferring notification until unlock")
+                    prefs.pendingNotifAttempt = attemptNumber
+                    prefs.pendingNotifPath    = lastSavedFile.absolutePath
+                } else {
+                    sendNotification(attemptNumber, lastSavedFile)
                 }
             }
 
-            // ── REAR CAMERA ───────────────────────────────────────────────────
-            if (useRear) {
-                DebugLogger.log(TAG, ">>> Starting REAR camera capture...")
-                val rearSuccess = captureSingle(
-                    provider = provider,
-                    selector = CameraSelector.DEFAULT_BACK_CAMERA,
-                    label = "rear",
-                    attempt = attemptNumber,
-                    location = location
-                )
-                DebugLogger.log(TAG, "<<< REAR capture done. success=$rearSuccess")
-            }
-
-            DebugLogger.log(TAG, "All captures complete. Stopping service.")
+            DebugLogger.log(TAG, "All captures complete.")
             finish()
         }
     }
 
-    /**
-     * CameraProvider ko suspend function se await karo.
-     * ListenableFuture ke liye manual coroutine bridge (guava dependency nahi chahiye).
-     */
     private suspend fun getCameraProvider(): ProcessCameraProvider? =
         suspendCancellableCoroutine { cont ->
             try {
@@ -164,9 +142,7 @@ class IntruderCaptureService : LifecycleService() {
         }
 
     /**
-     * Single camera capture — returns true on success, false on any failure.
-     * suspendCancellableCoroutine ensure karta hai ki caller tab tak wait kare
-     * jab tak photo save nahi ho jaata.
+     * Returns: File if success, null if failed.
      */
     private suspend fun captureSingle(
         provider: ProcessCameraProvider,
@@ -174,59 +150,88 @@ class IntruderCaptureService : LifecycleService() {
         label: String,
         attempt: Int,
         location: Location?
-    ): Boolean = suspendCancellableCoroutine { cont ->
-        fun safeResume(value: Boolean) {
-            if (cont.isActive) cont.resume(value) {}
-        }
-
+    ): File? = suspendCancellableCoroutine { cont ->
+        fun resume(file: File?) { if (cont.isActive) cont.resume(file) {} }
         try {
-            // Pehle wali binding hato
             provider.unbindAll()
-
             val imageCapture = ImageCapture.Builder()
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
                 .build()
-
-            // Camera bind karo
             try {
-                provider.bindToLifecycle(this@IntruderCaptureService, selector, imageCapture)
-                DebugLogger.log(TAG, "$label: camera bound successfully")
+                provider.bindToLifecycle(this, selector, imageCapture)
+                DebugLogger.log(TAG, "$label: camera bound OK")
             } catch (e: Exception) {
-                DebugLogger.error(TAG, "$label: bindToLifecycle FAILED: ${e.message}")
-                safeResume(false)
-                return@suspendCancellableCoroutine
+                DebugLogger.error(TAG, "$label: bind FAILED: ${e.message}")
+                resume(null); return@suspendCancellableCoroutine
             }
 
-            // Photo file create karo
             val file = createImageFile(label)
             DebugLogger.log(TAG, "$label: taking photo → ${file.name}")
-
             imageCapture.takePicture(
                 ImageCapture.OutputFileOptions.Builder(file).build(),
-                ContextCompat.getMainExecutor(this@IntruderCaptureService),
+                ContextCompat.getMainExecutor(this),
                 object : ImageCapture.OnImageSavedCallback {
                     override fun onImageSaved(result: ImageCapture.OutputFileResults) {
-                        DebugLogger.log(TAG, "$label photo saved! ✓ size=${file.length() / 1024}KB path=${file.name}")
+                        DebugLogger.log(TAG, "$label photo saved! ✓ size=${file.length() / 1024}KB")
                         provider.unbindAll()
-                        // DB save alag coroutine mein (non-blocking)
                         serviceScope.launch(Dispatchers.IO) {
                             saveToDb(file, label, attempt, location)
-                            if (prefs.saveToGallery) saveToGallery(file)
-                            if (prefs.notificationEnabled) sendNotification(attempt, file)
+                            // BUG 7 FIX: Gallery save properly karo (MediaStore API)
+                            if (prefs.saveToGallery) saveToGalleryMediaStore(file)
                         }
-                        safeResume(true)
+                        resume(file)
                     }
-
                     override fun onError(e: ImageCaptureException) {
-                        DebugLogger.error(TAG, "$label capture ERROR: ${e.message} reason=${e.imageCaptureError}")
-                        provider.unbindAll()
-                        safeResume(false)
+                        DebugLogger.error(TAG, "$label ERROR: ${e.message}")
+                        provider.unbindAll(); resume(null)
                     }
                 }
             )
         } catch (e: Exception) {
-            DebugLogger.error(TAG, "$label unexpected exception: ${e.message}")
-            safeResume(false)
+            DebugLogger.error(TAG, "$label exception: ${e.message}"); resume(null)
+        }
+    }
+
+    /**
+     * BUG 7 FIX: filesDir images gallery mein nahi dikhte.
+     * MediaStore API se properly gallery mein copy karo.
+     */
+    private fun saveToGalleryMediaStore(file: File) {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                // API 29+: MediaStore
+                val values = ContentValues().apply {
+                    put(MediaStore.Images.Media.DISPLAY_NAME, file.name)
+                    put(MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
+                    put(MediaStore.Images.Media.RELATIVE_PATH, "Pictures/Trapix")
+                    put(MediaStore.Images.Media.IS_PENDING, 1)
+                }
+                val uri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values)
+                if (uri != null) {
+                    contentResolver.openOutputStream(uri)?.use { out ->
+                        file.inputStream().use { it.copyTo(out) }
+                    }
+                    values.clear()
+                    values.put(MediaStore.Images.Media.IS_PENDING, 0)
+                    contentResolver.update(uri, values, null, null)
+                    DebugLogger.log(TAG, "Gallery save OK (MediaStore API 29+): ${file.name}")
+                } else {
+                    DebugLogger.error(TAG, "Gallery save: MediaStore insert returned null")
+                }
+            } else {
+                // API < 29: External storage copy + MediaScanner
+                val picturesDir = File(
+                    android.os.Environment.getExternalStoragePublicDirectory(
+                        android.os.Environment.DIRECTORY_PICTURES), "Trapix"
+                ).also { it.mkdirs() }
+                val dest = File(picturesDir, file.name)
+                file.copyTo(dest, overwrite = true)
+                android.media.MediaScannerConnection.scanFile(
+                    this, arrayOf(dest.absolutePath), arrayOf("image/jpeg"), null)
+                DebugLogger.log(TAG, "Gallery save OK (copy+scan): ${dest.absolutePath}")
+            }
+        } catch (e: Exception) {
+            DebugLogger.error(TAG, "Gallery save FAILED: ${e.message}")
         }
     }
 
@@ -235,13 +240,13 @@ class IntruderCaptureService : LifecycleService() {
     private fun saveToDb(file: File, label: String, attempt: Int, location: Location?) {
         try {
             val log = IntruderLog(
-                imagePath = file.absolutePath,
-                timestamp = System.currentTimeMillis(),
-                latitude = location?.latitude ?: 0.0,
-                longitude = location?.longitude ?: 0.0,
+                imagePath   = file.absolutePath,
+                timestamp   = System.currentTimeMillis(),
+                latitude    = location?.latitude ?: 0.0,
+                longitude   = location?.longitude ?: 0.0,
                 attemptNumber = attempt,
-                cameraUsed = label,
-                deviceInfo = "${Build.MANUFACTURER} ${Build.MODEL}"
+                cameraUsed  = label,
+                deviceInfo  = "${Build.MANUFACTURER} ${Build.MODEL}"
             )
             runBlocking { db.intruderDao().insert(log) }
             DebugLogger.log(TAG, "$label: saved to DB ok")
@@ -250,19 +255,13 @@ class IntruderCaptureService : LifecycleService() {
         }
     }
 
-    private fun finish() {
-        isCapturing = false
-        stopSelf()
-    }
+    private fun finish() { isCapturing = false; stopSelf() }
 
     private fun createImageFile(label: String): File {
-        val ts = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+        val ts  = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
         val dir = File(filesDir, "intruder_photos").also { it.mkdirs() }
         return File(dir, "INTRUDER_${label}_${ts}.jpg")
     }
-
-    private fun saveToGallery(file: File) =
-        MediaScannerConnection.scanFile(this, arrayOf(file.absolutePath), arrayOf("image/jpeg"), null)
 
     private fun getLastKnownLocation(): Location? {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) return null
@@ -270,9 +269,7 @@ class IntruderCaptureService : LifecycleService() {
             val lm = getSystemService(Context.LOCATION_SERVICE) as LocationManager
             lm.getLastKnownLocation(LocationManager.GPS_PROVIDER)
                 ?: lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-        } catch (e: Exception) {
-            null
-        }
+        } catch (e: Exception) { null }
     }
 
     private fun hasCamera() =
@@ -291,8 +288,7 @@ class IntruderCaptureService : LifecycleService() {
             .setContentTitle("⚠️ Intruder!")
             .setContentText("Attempt #$attempt captured")
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setContentIntent(pi)
+            .setAutoCancel(true).setContentIntent(pi)
             .setVibrate(longArrayOf(0, 300, 200, 300))
         try {
             val bmp = BitmapFactory.decodeFile(file.absolutePath)
@@ -304,11 +300,8 @@ class IntruderCaptureService : LifecycleService() {
     }
 
     private fun buildCaptureForegroundNotif() = NotificationCompat.Builder(this, CHANNEL_ID)
-        .setSmallIcon(R.drawable.ic_shield)
-        .setContentTitle("Trapix")
-        .setContentText("Security active...")
-        .setPriority(NotificationCompat.PRIORITY_MIN)
-        .build()
+        .setSmallIcon(R.drawable.ic_shield).setContentTitle("Trapix")
+        .setContentText("Security active...").setPriority(NotificationCompat.PRIORITY_MIN).build()
 
     private fun createNotificationChannel() {
         val ch = NotificationChannel(CHANNEL_ID, "Trapix Security", NotificationManager.IMPORTANCE_HIGH)
@@ -316,10 +309,5 @@ class IntruderCaptureService : LifecycleService() {
         (getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager).createNotificationChannel(ch)
     }
 
-    override fun onDestroy() {
-        isCapturing = false
-        serviceScope.cancel()
-        super.onDestroy()
-    }
+    override fun onDestroy() { isCapturing = false; serviceScope.cancel(); super.onDestroy() }
 }
-

@@ -25,7 +25,7 @@ class PatternView @JvmOverloads constructor(
     companion object {
         private const val GRID_SIZE = 3
         private const val NODE_COUNT = GRID_SIZE * GRID_SIZE
-        private const val MIN_NODES = 4   // Minimum nodes required to complete pattern
+        private const val MIN_NODES = 4
         private const val TAG = "PATTERN"
     }
 
@@ -36,29 +36,30 @@ class PatternView @JvmOverloads constructor(
     private var offsetX = 0f
     private var offsetY = 0f
 
-    private val normalPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val normalPaint   = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
     private val selectedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
-    private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    private val linePaint     = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         strokeWidth = 6f; style = Paint.Style.STROKE
         strokeCap = Paint.Cap.ROUND; strokeJoin = Paint.Join.ROUND
     }
-    private val outerRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        style = Paint.Style.STROKE; strokeWidth = 3f
-    }
-    private val glowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
+    private val outerRingPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = 3f }
+    private val glowPaint      = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
 
     private val nodePositions = Array(NODE_COUNT) { PointF() }
     private val selectedNodes = mutableListOf<Int>()
     private var currentTouchX = 0f
     private var currentTouchY = 0f
     private var isDrawing = false
-    private var isError = false
+    private var isError   = false
     private var isSuccess = false
 
     var onPatternListener: OnPatternListener? = null
-
-    /** BUG 2 FIX: Callback jab nodes < MIN_NODES ho — caller ko Toast/feedback de sakta hai */
     var onTooFewNodes: (() -> Unit)? = null
+
+    // BUG 1 FIX: Handler reference rakhna zaroori hai taaki naya touch aane pe
+    // pehle wala clearPattern() cancel ho sake (race condition fix)
+    private val clearHandler = Handler(Looper.getMainLooper())
+    private var clearRunnable: Runnable? = null
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
         val w = MeasureSpec.getSize(widthMeasureSpec)
@@ -70,22 +71,19 @@ class PatternView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldW: Int, oldH: Int) {
         super.onSizeChanged(w, h, oldW, oldH)
         recalculate(w, h)
-        DebugLogger.log(TAG, "onSizeChanged: w=$w h=$h cellSize=$cellSize touchRadius=$touchRadius")
+        DebugLogger.log(TAG, "onSizeChanged: w=$w h=$h cellSize=${"%.2f".format(cellSize)} touchRadius=${"%.1f".format(touchRadius)}")
     }
 
     private fun recalculate(w: Int, h: Int) {
         val size = min(w, h).toFloat()
-        cellSize = size / GRID_SIZE.toFloat()
-        dotRadius = cellSize * 0.12f
+        cellSize      = size / GRID_SIZE.toFloat()
+        dotRadius     = cellSize * 0.12f
         selectedRadius = cellSize * 0.18f
-        // BUG 2 NOTE: touchRadius intentionally set to 0.35 (slightly smaller than 0.4)
-        // to reduce accidental multi-node hits on single touch
-        touchRadius = cellSize * 0.35f
+        touchRadius   = cellSize * 0.38f
         offsetX = (w - size) / 2f
         offsetY = (h - size) / 2f
         for (i in 0 until NODE_COUNT) {
-            val col = i % GRID_SIZE
-            val row = i / GRID_SIZE
+            val col = i % GRID_SIZE; val row = i / GRID_SIZE
             nodePositions[i] = PointF(
                 offsetX + cellSize * col + cellSize / 2f,
                 offsetY + cellSize * row + cellSize / 2f
@@ -97,49 +95,30 @@ class PatternView @JvmOverloads constructor(
         super.onDraw(canvas)
         if (cellSize == 0f) recalculate(width, height)
 
-        val activeColor = when {
-            isError -> 0xFFFF1744.toInt()
-            isSuccess -> 0xFF00E676.toInt()
-            else -> 0xFF00E5FF.toInt()
-        }
-        val activeDim = when {
-            isError -> 0x44FF1744.toInt()
-            isSuccess -> 0x4400E676.toInt()
-            else -> 0x4400E5FF.toInt()
-        }
+        val activeColor = when { isError -> 0xFFFF1744.toInt(); isSuccess -> 0xFF00E676.toInt(); else -> 0xFF00E5FF.toInt() }
+        val activeDim   = when { isError -> 0x44FF1744.toInt(); isSuccess -> 0x4400E676.toInt(); else -> 0x4400E5FF.toInt() }
 
-        // Draw lines between selected nodes
         if (selectedNodes.size > 1) {
             linePaint.color = activeColor; linePaint.alpha = 160
             for (i in 0 until selectedNodes.size - 1) {
-                val f = nodePositions[selectedNodes[i]]
-                val t = nodePositions[selectedNodes[i + 1]]
+                val f = nodePositions[selectedNodes[i]]; val t = nodePositions[selectedNodes[i + 1]]
                 canvas.drawLine(f.x, f.y, t.x, t.y, linePaint)
             }
         }
-
-        // Draw live line from last node to finger
         if (isDrawing && selectedNodes.isNotEmpty()) {
             linePaint.color = activeColor; linePaint.alpha = 80
             val last = nodePositions[selectedNodes.last()]
             canvas.drawLine(last.x, last.y, currentTouchX, currentTouchY, linePaint)
         }
-
-        // Draw nodes
         for (i in 0 until NODE_COUNT) {
             val pos = nodePositions[i]
             if (selectedNodes.contains(i)) {
-                glowPaint.color = activeDim
-                canvas.drawCircle(pos.x, pos.y, selectedRadius * 2f, glowPaint)
-                outerRingPaint.color = activeColor; outerRingPaint.alpha = 200
-                canvas.drawCircle(pos.x, pos.y, selectedRadius, outerRingPaint)
-                selectedPaint.color = activeColor
-                canvas.drawCircle(pos.x, pos.y, dotRadius, selectedPaint)
+                glowPaint.color = activeDim; canvas.drawCircle(pos.x, pos.y, selectedRadius * 2f, glowPaint)
+                outerRingPaint.color = activeColor; outerRingPaint.alpha = 200; canvas.drawCircle(pos.x, pos.y, selectedRadius, outerRingPaint)
+                selectedPaint.color = activeColor; canvas.drawCircle(pos.x, pos.y, dotRadius, selectedPaint)
             } else {
-                outerRingPaint.color = 0x44FFFFFF.toInt()
-                canvas.drawCircle(pos.x, pos.y, dotRadius + 8f, outerRingPaint)
-                normalPaint.color = 0xAAFFFFFF.toInt()
-                canvas.drawCircle(pos.x, pos.y, dotRadius, normalPaint)
+                outerRingPaint.color = 0x44FFFFFF.toInt(); canvas.drawCircle(pos.x, pos.y, dotRadius + 8f, outerRingPaint)
+                normalPaint.color = 0xAAFFFFFF.toInt(); canvas.drawCircle(pos.x, pos.y, dotRadius, normalPaint)
             }
         }
     }
@@ -147,14 +126,19 @@ class PatternView @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                // Reset state on new touch
-                isError = false
-                isSuccess = false
+                // BUG 1 FIX #1: Pehla pending clearRunnable cancel karo (race condition)
+                clearRunnable?.let { clearHandler.removeCallbacks(it) }
+                clearRunnable = null
+
+                // BUG 1 FIX #2: ScrollView ko bolo touch intercept mat karo
+                // Yahi main wajah thi ki MOVE events nahi mil rahe the
+                parent?.requestDisallowInterceptTouchEvent(true)
+
+                isError = false; isSuccess = false
                 selectedNodes.clear()
                 isDrawing = true
-                currentTouchX = event.x
-                currentTouchY = event.y
-                DebugLogger.log(TAG, "Touch DOWN at x=${event.x.toInt()} y=${event.y.toInt()}, viewSize=${width}x${height}, touchRadius=${"%.1f".format(touchRadius)}")
+                currentTouchX = event.x; currentTouchY = event.y
+                DebugLogger.log(TAG, "Touch DOWN at x=${event.x.toInt()} y=${event.y.toInt()}, viewSize=${width}x${height}")
                 onPatternListener?.onPatternStart()
                 checkNodeHit(event.x, event.y)
                 invalidate()
@@ -162,34 +146,30 @@ class PatternView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_MOVE -> {
-                currentTouchX = event.x
-                currentTouchY = event.y
+                currentTouchX = event.x; currentTouchY = event.y
                 checkNodeHit(event.x, event.y)
                 invalidate()
                 return true
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                // ScrollView ko wapas allow karo
+                parent?.requestDisallowInterceptTouchEvent(false)
                 isDrawing = false
                 val count = selectedNodes.size
                 DebugLogger.log(TAG, "Touch UP, nodes selected: $count -> $selectedNodes")
 
                 when {
                     count >= MIN_NODES -> {
-                        // BUG 2 FIX: Sirf MIN_NODES ya zyada nodes pe hi complete call karo
-                        DebugLogger.log(TAG, "Pattern complete with $count nodes")
+                        DebugLogger.log(TAG, "Pattern complete: $count nodes")
                         onPatternListener?.onPatternComplete(selectedNodes.toList())
                     }
                     count > 0 -> {
-                        // Nodes hain lekin kum hain — error show karo
-                        DebugLogger.log(TAG, "Too few nodes ($count < $MIN_NODES), showing error")
+                        DebugLogger.log(TAG, "Too few nodes ($count < $MIN_NODES)")
                         setError()
                         onTooFewNodes?.invoke()
                     }
-                    else -> {
-                        // Koi node hit nahi hua — silently ignore
-                        DebugLogger.log(TAG, "No nodes selected, ignoring touch")
-                    }
+                    else -> DebugLogger.log(TAG, "No nodes hit, ignoring")
                 }
                 invalidate()
                 return true
@@ -202,34 +182,36 @@ class PatternView @JvmOverloads constructor(
         for (i in 0 until NODE_COUNT) {
             if (selectedNodes.contains(i)) continue
             val pos = nodePositions[i]
-            val dx = x - pos.x
-            val dy = y - pos.y
+            val dx = x - pos.x; val dy = y - pos.y
             val dist = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
             if (dist <= touchRadius) {
                 DebugLogger.log(TAG, "Node $i HIT! dist=${"%.1f".format(dist)}")
-                selectedNodes.add(i)
-                invalidate()
+                selectedNodes.add(i); invalidate()
             }
         }
     }
 
     fun clearPattern() {
-        selectedNodes.clear()
-        isDrawing = false
-        isError = false
-        isSuccess = false
+        clearRunnable?.let { clearHandler.removeCallbacks(it) }
+        clearRunnable = null
+        selectedNodes.clear(); isDrawing = false; isError = false; isSuccess = false
         invalidate()
     }
 
     fun setError() {
-        isError = true
-        invalidate()
-        Handler(Looper.getMainLooper()).postDelayed({ clearPattern() }, 900)
+        isError = true; invalidate()
+        // BUG 1 FIX #3: Runnable ko track karo taaki cancel ho sake
+        clearRunnable?.let { clearHandler.removeCallbacks(it) }
+        val r = Runnable { clearPattern() }
+        clearRunnable = r
+        clearHandler.postDelayed(r, 900)
     }
 
     fun setSuccess() {
-        isSuccess = true
-        invalidate()
-        Handler(Looper.getMainLooper()).postDelayed({ clearPattern() }, 400)
+        isSuccess = true; invalidate()
+        clearRunnable?.let { clearHandler.removeCallbacks(it) }
+        val r = Runnable { clearPattern() }
+        clearRunnable = r
+        clearHandler.postDelayed(r, 400)
     }
 }

@@ -29,6 +29,14 @@
             android:padding="16dp">
 
 
+            <!-- BUG 8 FIX: Service Status + Save Button -->
+            <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" style="@style/TrapixCard">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+                    <TextView android:id="@+id/tvServiceStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⏳ Checking monitor status..." android:textSize="14sp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
+                    <Button android:id="@+id/btnSaveSettings" style="@style/TrapixButton" android:layout_width="match_parent" android:layout_height="48dp" android:text="Save Settings"/>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Screen Lock Monitor Section -->
             <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="📱  PHONE LOCK MONITOR" android:textColor="@color/trapix_accent" android:textSize="11sp" android:letterSpacing="0.15" android:layout_marginBottom="8dp" android:layout_marginTop="8dp"/>
 
