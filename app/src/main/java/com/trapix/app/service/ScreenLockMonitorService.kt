@@ -37,26 +37,20 @@ class ScreenLockMonitorService : AccessibilityService() {
         // Isliye 2 alag cooldowns:
         // - DETECTION_COOLDOWN: ek wrong attempt ko sirf ek baar count karo (15s)
         // - CAPTURE_COOLDOWN: capture ke baad itne time tak dobara capture mat karo (90s)
-        private const val DETECTION_COOLDOWN_MS = 15_000L   // Ek wrong attempt = 1 count
-        private const val CAPTURE_COOLDOWN_MS   = 90_000L   // Capture ke baad 90s cooldown
-        private const val STATUS_LOG_THROTTLE_MS = 8_000L   // Spam log throttle
+        private const val DETECTION_COOLDOWN_MS  = 15_000L
+        private const val CAPTURE_COOLDOWN_MS    = 90_000L
+        private const val STATUS_LOG_THROTTLE_MS =  8_000L
+        private const val TYPING_WINDOW_MS       =  5_000L
     }
 
     private lateinit var prefs: AppPrefs
     private lateinit var keyguardManager: KeyguardManager
-
-    // BUG 2 FIX: Threshold counter — prefs.wrongAttemptThreshold attempts ke baad hi capture
-    private var detectionCount = 0
-
-    // Timers
-    private var lastDetectionTime = 0L  // Last individual wrong attempt count time
-    private var lastCaptureTime   = 0L  // Last actual capture trigger time
+    private var detectionCount    = 0
+    private var lastDetectionTime = 0L
+    private var lastCaptureTime   = 0L
     private var lastStatusLogTime = 0L
-
-    // Text-clear detection (Samsung PIN)
     private var hadTypingActivity = false
     private var lastTypingTime    = 0L
-    private const val TYPING_WINDOW_MS = 5_000L
 
     override fun onServiceConnected() {
         super.onServiceConnected()

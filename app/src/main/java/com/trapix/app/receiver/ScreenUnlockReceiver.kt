@@ -66,7 +66,7 @@ class ScreenUnlockReceiver : BroadcastReceiver() {
             try {
                 val bmp = BitmapFactory.decodeFile(file.absolutePath)
                 if (bmp != null) b = b.setLargeIcon(bmp)
-                    .setStyle(NotificationCompat.BigPictureStyle().bigPicture(bmp).bigLargeIcon(null))
+                    .setStyle(NotificationCompat.BigPictureStyle().bigPicture(bmp).bigLargeIcon(null as android.graphics.Bitmap?))
             } catch (_: Exception) {}
         }
 
