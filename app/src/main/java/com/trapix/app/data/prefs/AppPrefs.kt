@@ -27,7 +27,10 @@ class AppPrefs(context: Context) {
         private const val KEY_WRONG_ATTEMPT_COUNT     = "wrong_attempt_count"
         private const val KEY_SAVE_TO_GALLERY         = "save_to_gallery"
         private const val KEY_THEME_DARK              = "theme_dark"
-        // BUG 4 FIX: Screen locked hone pe notification defer karo
+        private const val KEY_LOCK_ON_MINIMIZE        = "lock_on_minimize"
+        // BUG 6 FIX: Persist LockScreen wrong attempts across recreations
+        private const val KEY_LOCK_SCREEN_ATTEMPTS    = "lock_screen_attempts"
+        // BUG 4: Deferred notification
         private const val KEY_PENDING_NOTIF_ATTEMPT   = "pending_notif_attempt"
         private const val KEY_PENDING_NOTIF_PATH      = "pending_notif_path"
     }
@@ -80,7 +83,17 @@ class AppPrefs(context: Context) {
         get()      = prefs.getBoolean(KEY_THEME_DARK, true)
         set(value) = prefs.edit { putBoolean(KEY_THEME_DARK, value) }
 
-    // BUG 4: Pending notification (screen locked hone pe defer karo)
+    // Feature 2: Lock on minimize
+    var lockOnMinimize: Boolean
+        get()      = prefs.getBoolean(KEY_LOCK_ON_MINIMIZE, false)
+        set(value) = prefs.edit { putBoolean(KEY_LOCK_ON_MINIMIZE, value) }
+
+    // BUG 6 FIX: Persist wrong attempts in LockScreen across activity recreations
+    var lockScreenAttempts: Int
+        get()      = prefs.getInt(KEY_LOCK_SCREEN_ATTEMPTS, 0)
+        set(value) = prefs.edit { putInt(KEY_LOCK_SCREEN_ATTEMPTS, value) }
+
+    // Deferred notification
     var pendingNotifAttempt: Int
         get()      = prefs.getInt(KEY_PENDING_NOTIF_ATTEMPT, -1)
         set(value) = prefs.edit { putInt(KEY_PENDING_NOTIF_ATTEMPT, value) }
@@ -90,13 +103,11 @@ class AppPrefs(context: Context) {
         set(value) = prefs.edit { putString(KEY_PENDING_NOTIF_PATH, value) }
 
     fun clearPendingNotif() {
-        prefs.edit {
-            putInt(KEY_PENDING_NOTIF_ATTEMPT, -1)
-            putString(KEY_PENDING_NOTIF_PATH, "")
-        }
+        prefs.edit { putInt(KEY_PENDING_NOTIF_ATTEMPT, -1); putString(KEY_PENDING_NOTIF_PATH, "") }
     }
 
     fun resetWrongAttemptCount() {
         wrongAttemptCount = 0
+        lockScreenAttempts = 0
     }
 }

@@ -21,7 +21,6 @@ jobs:
 
       - name: Install Gradle 8.6 directly
         run: |
-          # Download and install Gradle directly - no wrapper jar needed
           GRADLE_VERSION="8.6"
           GRADLE_ZIP="/tmp/gradle-${GRADLE_VERSION}-bin.zip"
           GRADLE_INSTALL_DIR="$HOME/gradle-${GRADLE_VERSION}"
@@ -29,24 +28,23 @@ jobs:
           echo "Downloading Gradle ${GRADLE_VERSION}..."
           curl -L -o "$GRADLE_ZIP" \
             "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip"
-          
+
           echo "Extracting..."
           unzip -q "$GRADLE_ZIP" -d "$HOME"
           mv "$HOME/gradle-${GRADLE_VERSION}" "$GRADLE_INSTALL_DIR" 2>/dev/null || true
-          
+
           GRADLE_BIN=$(find "$HOME" -name "gradle" -path "*/bin/gradle" | head -1)
           echo "Gradle found at: $GRADLE_BIN"
           echo "GRADLE_HOME=$(dirname $(dirname $GRADLE_BIN))" >> $GITHUB_ENV
           echo "$(dirname $GRADLE_BIN)" >> $GITHUB_PATH
 
-          # Also put the wrapper jar from this Gradle install into the project
           WRAPPER_JAR=$(find "$HOME" -name "gradle-wrapper.jar" | head -1)
           if [ -n "$WRAPPER_JAR" ]; then
-            echo "Found wrapper jar at $WRAPPER_JAR ($(wc -c < "$WRAPPER_JAR") bytes)"
+            echo "Found wrapper jar at $WRAPPER_JAR"
             mkdir -p gradle/wrapper
             cp "$WRAPPER_JAR" gradle/wrapper/gradle-wrapper.jar
           fi
-          
+
           chmod +x gradlew
           gradle --version
 
@@ -63,21 +61,45 @@ jobs:
       - name: Build Debug APK
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+      - name: Setup Keystore for Signing
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+          echo "Keystore decoded ($(wc -c < keystore.jks) bytes)"
+
+      - name: Build & Sign Release APK
+        run: |
+          ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=${{ github.workspace }}/keystore.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+
       - name: Get build tag
         id: tag
         run: echo "tag=v$(date +'%Y.%m.%d-%H%M')" >> $GITHUB_OUTPUT
 
-      - name: Rename APK
+      - name: Collect APKs
         run: |
           mkdir -p release-apk
-          APK_PATH=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
-          echo "APK found: $APK_PATH"
-          cp "$APK_PATH" "release-apk/Trapix-${{ steps.tag.outputs.tag }}.apk"
+          # Debug APK
+          DEBUG_APK=$(find app/build/outputs/apk/debug -name "*.apk" | head -1)
+          if [ -n "$DEBUG_APK" ]; then
+            cp "$DEBUG_APK" "release-apk/Trapix-debug-${{ steps.tag.outputs.tag }}.apk"
+            echo "Debug APK: $DEBUG_APK"
+          fi
+          # Signed Release APK
+          RELEASE_APK=$(find app/build/outputs/apk/release -name "*.apk" | head -1)
+          if [ -n "$RELEASE_APK" ]; then
+            cp "$RELEASE_APK" "release-apk/Trapix-release-signed-${{ steps.tag.outputs.tag }}.apk"
+            echo "Release APK: $RELEASE_APK"
+          fi
+          echo "APKs collected:"
+          ls -lh release-apk/
 
-      - name: Upload APK as Artifact
+      - name: Upload APKs as Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: Trapix-APK-${{ steps.tag.outputs.tag }}
+          name: Trapix-APKs-${{ steps.tag.outputs.tag }}
           path: release-apk/*.apk
           retention-days: 30
 
@@ -89,10 +111,17 @@ jobs:
           body: |
             ## 🔐 Trapix — Intruder Catcher
 
+            ### What's New:
+            - ✅ Pattern lock fixed
+            - ✅ Wrong attempt threshold working correctly
+            - ✅ App minimize → auto lock feature
+            - ✅ Gallery search + filter (camera, date)
+            - ✅ Permission status in settings
+            - ✅ Signed release APK
+
             ### Install Karo:
-            1. Neeche `Trapix-*.apk` download karo
-            2. Phone mein "Unknown sources" enable karo
-            3. APK install karo aur app open karo!
+            1. **`Trapix-release-signed-*.apk`** — Signed (recommended, update without uninstall)
+            2. **`Trapix-debug-*.apk`** — Debug build
 
             **Commit:** `${{ github.sha }}`
           files: release-apk/*.apk

@@ -29,10 +29,10 @@
             android:padding="16dp">
 
 
-            <!-- BUG 8 FIX: Service Status + Save Button -->
+            <!-- Status + Save Button -->
             <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" style="@style/TrapixCard">
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
-                    <TextView android:id="@+id/tvServiceStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⏳ Checking monitor status..." android:textSize="14sp" android:textStyle="bold" android:layout_marginBottom="12dp"/>
+                    <TextView android:id="@+id/tvServiceStatus" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="⏳ Checking..." android:textSize="13sp" android:textStyle="bold" android:layout_marginBottom="10dp"/>
                     <Button android:id="@+id/btnSaveSettings" style="@style/TrapixButton" android:layout_width="match_parent" android:layout_height="48dp" android:text="Save Settings"/>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -71,6 +71,35 @@
                         </LinearLayout>
                         <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchBiometric" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/trapix_accent" app:trackTint="@color/trapix_accent_dim"/>
                     </LinearLayout>
+
+                    <View android:layout_width="match_parent" android:layout_height="1dp" android:background="@color/trapix_divider" android:layout_marginBottom="12dp"/>
+
+                    <!-- Feature 2: Lock on minimize -->
+                    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical">
+                        <LinearLayout android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content" android:orientation="vertical">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Lock on Minimize" android:textColor="@color/trapix_text_primary" android:textSize="15sp"/>
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Require unlock when app is reopened" android:textColor="@color/trapix_text_secondary" android:textSize="12sp"/>
+                        </LinearLayout>
+                        <com.google.android.material.switchmaterial.SwitchMaterial android:id="@+id/switchLockOnMinimize" android:layout_width="wrap_content" android:layout_height="wrap_content" app:thumbTint="@color/trapix_accent" app:trackTint="@color/trapix_accent_dim"/>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Feature 4: Permissions Section -->
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="🔒  PERMISSIONS" android:textColor="@color/trapix_accent" android:textSize="11sp" android:letterSpacing="0.15" android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.card.MaterialCardView android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginBottom="16dp" style="@style/TrapixCard">
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="vertical" android:padding="16dp">
+
+                    <TextView android:id="@+id/tvPermCamera" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="📷 Camera" android:textColor="@color/trapix_text_primary" android:textSize="14sp" android:layout_marginBottom="4dp"/>
+                    <Button android:id="@+id/btnGrantCamera" style="@style/TrapixButtonOutline" android:layout_width="wrap_content" android:layout_height="36dp" android:text="Grant Camera" android:textSize="12sp" android:layout_marginBottom="12dp" android:visibility="gone"/>
+
+                    <TextView android:id="@+id/tvPermLocation" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="📍 Location" android:textColor="@color/trapix_text_primary" android:textSize="14sp" android:layout_marginBottom="4dp"/>
+                    <Button android:id="@+id/btnGrantLocation" style="@style/TrapixButtonOutline" android:layout_width="wrap_content" android:layout_height="36dp" android:text="Grant Location" android:textSize="12sp" android:layout_marginBottom="12dp" android:visibility="gone"/>
+
+                    <TextView android:id="@+id/tvPermNotification" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="🔔 Notifications" android:textColor="@color/trapix_text_primary" android:textSize="14sp" android:layout_marginBottom="4dp"/>
+                    <Button android:id="@+id/btnGrantNotif" style="@style/TrapixButtonOutline" android:layout_width="wrap_content" android:layout_height="36dp" android:text="Grant Notifications" android:textSize="12sp" android:visibility="gone"/>
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>

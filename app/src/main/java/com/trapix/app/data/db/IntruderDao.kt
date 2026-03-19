@@ -30,4 +30,20 @@ interface IntruderDao {
 
     @Query("UPDATE intruder_logs SET isSavedToGallery = 1 WHERE id = :id")
     suspend fun markSavedToGallery(id: Long)
+
+    // Feature 7: Filter by camera
+    @Query("SELECT * FROM intruder_logs WHERE cameraUsed = :camera ORDER BY timestamp DESC")
+    fun getLogsByCamera(camera: String): LiveData<List<IntruderLog>>
+
+    // Feature 7: Filter by date range (timestamp in ms)
+    @Query("SELECT * FROM intruder_logs WHERE timestamp >= :fromMs ORDER BY timestamp DESC")
+    fun getLogsFromDate(fromMs: Long): LiveData<List<IntruderLog>>
+
+    // Feature 7: Filter by camera + date range
+    @Query("SELECT * FROM intruder_logs WHERE cameraUsed = :camera AND timestamp >= :fromMs ORDER BY timestamp DESC")
+    fun getLogsByCameraAndDate(camera: String, fromMs: Long): LiveData<List<IntruderLog>>
+
+    // Feature 7: Search by attempt number (stored as string for broader match)
+    @Query("SELECT * FROM intruder_logs WHERE attemptNumber = :attempt ORDER BY timestamp DESC")
+    fun getLogsByAttempt(attempt: Int): LiveData<List<IntruderLog>>
 }

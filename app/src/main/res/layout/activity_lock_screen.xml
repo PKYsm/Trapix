@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     android:background="@color/trapix_bg">
 
+    <!-- Logo top -->
     <LinearLayout
         android:id="@+id/layoutHeader"
         android:layout_width="wrap_content"
@@ -15,43 +16,62 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="60dp">
+        android:layout_marginTop="48dp">
+
         <ImageView
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
             android:src="@drawable/ic_shield"
             app:tint="@color/trapix_accent"/>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="TRAPIX"
             android:textColor="@color/trapix_text_primary"
-            android:textSize="20sp"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:letterSpacing="0.3"
-            android:layout_marginTop="8dp"/>
+            android:layout_marginTop="6dp"/>
     </LinearLayout>
 
+    <!-- PIN dots — center of screen -->
     <LinearLayout
         android:id="@+id/layoutPinLock"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="24dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
         app:layout_constraintTop_toBottomOf="@id/layoutHeader"
-        app:layout_constraintBottom_toTopOf="@id/btnBiometric"
+        app:layout_constraintBottom_toTopOf="@id/layoutPinNumpad"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
         <TextView
             android:id="@+id/tvLockPinDots"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="○○○○○○"
             android:textColor="@color/trapix_accent"
-            android:textSize="32sp"
-            android:letterSpacing="0.3"
-            android:layout_marginBottom="28dp"/>
+            android:textSize="36sp"
+            android:letterSpacing="0.25"/>
+
+    </LinearLayout>
+
+    <!-- PIN numpad — pinned to BOTTOM -->
+    <LinearLayout
+        android:id="@+id/layoutPinNumpad"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:paddingBottom="24dp"
+        app:layout_constraintBottom_toTopOf="@id/btnBiometric"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtn1" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="1" android:layout_margin="4dp"/>
             <Button android:id="@+id/lockBtn2" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="2" android:layout_margin="4dp"/>
@@ -69,44 +89,52 @@
         </LinearLayout>
         <LinearLayout android:layout_width="wrap_content" android:layout_height="wrap_content" android:orientation="horizontal">
             <Button android:id="@+id/lockBtnBack" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="⌫" android:layout_margin="4dp" android:textColor="@color/trapix_text_secondary"/>
-            <Button android:id="@+id/lockBtn0" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="0" android:layout_margin="4dp"/>
-            <Button android:id="@+id/lockBtnOk" style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="✓" android:layout_margin="4dp" android:textColor="@color/trapix_accent"/>
+            <Button android:id="@+id/lockBtn0"    style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="0" android:layout_margin="4dp"/>
+            <Button android:id="@+id/lockBtnOk"   style="@style/NumPadButton" android:layout_width="@dimen/numpad_button_size" android:layout_height="@dimen/numpad_button_size" android:text="✓" android:layout_margin="4dp" android:textColor="@color/trapix_accent"/>
         </LinearLayout>
+
     </LinearLayout>
 
+    <!-- Pattern view — center screen -->
     <LinearLayout
         android:id="@+id/layoutPatternLock"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="24dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/layoutHeader"
         app:layout_constraintBottom_toTopOf="@id/btnBiometric"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
         <com.trapix.app.ui.lock.PatternView
             android:id="@+id/lockPatternView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:minHeight="250dp"
-            android:maxHeight="350dp"/>
+            android:minHeight="260dp"
+            android:maxHeight="340dp"/>
+
     </LinearLayout>
 
+    <!-- Password view — center screen -->
     <LinearLayout
         android:id="@+id/layoutPasswordLock"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:gravity="center"
-        android:padding="24dp"
+        android:paddingStart="24dp"
+        android:paddingEnd="24dp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@id/layoutHeader"
         app:layout_constraintBottom_toTopOf="@id/btnBiometric"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
+
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -115,6 +143,7 @@
             app:boxStrokeColor="@color/trapix_accent"
             app:boxBackgroundColor="@color/trapix_card"
             android:layout_marginBottom="20dp">
+
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/etLockPassword"
                 android:layout_width="match_parent"
@@ -123,7 +152,9 @@
                 android:textColor="@color/trapix_text_primary"
                 android:imeOptions="actionDone"
                 android:imeActionLabel="Unlock"/>
+
         </com.google.android.material.textfield.TextInputLayout>
+
         <Button
             android:id="@+id/btnPasswordUnlock"
             style="@style/TrapixButton"
@@ -131,8 +162,10 @@
             android:layout_height="52dp"
             android:text="→ Unlock"
             android:textSize="13sp"/>
+
     </LinearLayout>
 
+    <!-- Biometric button — above bottom edge -->
     <Button
         android:id="@+id/btnBiometric"
         style="@style/TrapixButtonOutline"
@@ -144,6 +177,6 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="40dp"/>
+        android:layout_marginBottom="16dp"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
