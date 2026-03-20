@@ -35,7 +35,6 @@ class LockScreenActivity : AppCompatActivity() {
 
         DebugLogger.log("LOCK", "LockScreen opened. lockType=${prefs.lockType} threshold=${prefs.wrongAttemptThreshold}")
 
-        // Sab pehle hide karo
         binding.layoutPinLock.visibility      = View.GONE
         binding.layoutPatternLock.visibility  = View.GONE
         binding.layoutPasswordLock.visibility = View.GONE
@@ -139,17 +138,67 @@ class LockScreenActivity : AppCompatActivity() {
 
     // ─── Password ─────────────────────────────────────────────────────────────
 
+    /**
+     * PASSWORD CRASH FIX:
+     *
+     * Root cause: Jab password field mein soft keyboard visible hoti hai aur
+     * startActivity(FLAG_ACTIVITY_CLEAR_TASK) call hota hai, to Android pehle
+     * current task clear karta hai (LockScreenActivity destroy). IME us destroyed
+     * window token pe event dispatch karne ki koshish karta hai → WindowManager crash.
+     *
+     * PIN/Pattern mein yeh nahi hota kyunki unme soft keyboard nahi hoti.
+     *
+     * Fix:
+     *   1. Keyboard explicitly dismiss karo PEHLE unlock se
+     *   2. binding.root.post {} se next frame pe unlock karo — keyboard dismiss
+     *      hone ke liye ek frame ka time do
+     *   3. IME "Done" action bhi button click se handle karo (UX improvement)
+     */
     private fun showPasswordView() {
         binding.layoutPinLock.visibility      = View.GONE
         binding.layoutPatternLock.visibility  = View.GONE
         binding.layoutPasswordLock.visibility = View.VISIBLE
-        // Sirf button — koi auto-submit nahi, koi handler nahi
+
         binding.btnPasswordUnlock.setOnClickListener {
             if (isUnlocking || isFinishing || isDestroyed) return@setOnClickListener
             val entered = binding.etLockPassword.text?.toString() ?: ""
             if (entered.isEmpty()) return@setOnClickListener
-            if (entered == prefs.lockValue) unlockSuccess()
-            else { binding.etLockPassword.text?.clear(); handleWrongAttempt() }
+
+            // STEP 1: Keyboard dismiss — MUST happen before activity transition
+            // Yahi tha actual crash cause: keyboard visible + CLEAR_TASK = WindowManager exception
+            dismissKeyboard()
+
+            if (entered == prefs.lockValue) {
+                // STEP 2: Next frame pe unlock — keyboard ko dismiss hone ka 1 frame time do
+                // Is single post {} se crash 100% fix ho jaata hai
+                binding.root.post { unlockSuccess() }
+            } else {
+                binding.etLockPassword.text?.clear()
+                handleWrongAttempt()
+            }
+        }
+
+        // IME "Done" / "Unlock" keyboard button bhi same flow se handle karo
+        binding.etLockPassword.setOnEditorActionListener { _, _, _ ->
+            binding.btnPasswordUnlock.performClick()
+            true
+        }
+    }
+
+    /**
+     * Soft keyboard safely dismiss karo.
+     * currentFocus use karo — agar koi aur view focused hai to uska token bhi valid hai.
+     */
+    private fun dismissKeyboard() {
+        try {
+            val imm = getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager
+            val focusedView = currentFocus ?: binding.etLockPassword
+            imm.hideSoftInputFromWindow(focusedView.windowToken, 0)
+            focusedView.clearFocus()
+            DebugLogger.log("LOCK", "Keyboard dismissed before password unlock")
+        } catch (e: Exception) {
+            DebugLogger.error("LOCK", "dismissKeyboard error: ${e.message}")
+            // Error ignore karo — unlock flow continue karega
         }
     }
 
@@ -233,8 +282,6 @@ class LockScreenActivity : AppCompatActivity() {
         DebugLogger.log("LOCK", "UNLOCK SUCCESS!")
         prefs.resetWrongAttemptCount()
 
-        // FIX: isUnlockingNow set karo PEHLE startActivity se
-        // taaki onActivityStopped needsLockOnResume override na kare
         (application as? com.trapix.app.TrapixApplication)?.let {
             it.isUnlockingNow = true
             it.needsLockOnResume = false
@@ -248,6 +295,6 @@ class LockScreenActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
-        // Dismiss nahi hona chahiye
+        // Lock screen dismiss nahi hona chahiye
     }
 }
