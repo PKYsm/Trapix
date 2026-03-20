@@ -228,11 +228,17 @@ class LockScreenActivity : AppCompatActivity() {
 
     private fun unlockSuccess() {
         if (isUnlocking || isFinishing || isDestroyed) return
-        isUnlocking = true  // Double call se bachao
+        isUnlocking = true
 
         DebugLogger.log("LOCK", "UNLOCK SUCCESS!")
         prefs.resetWrongAttemptCount()
-        (application as? com.trapix.app.TrapixApplication)?.needsLockOnResume = false
+
+        // FIX: isUnlockingNow set karo PEHLE startActivity se
+        // taaki onActivityStopped needsLockOnResume override na kare
+        (application as? com.trapix.app.TrapixApplication)?.let {
+            it.isUnlockingNow = true
+            it.needsLockOnResume = false
+        }
 
         startActivity(Intent(this, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
