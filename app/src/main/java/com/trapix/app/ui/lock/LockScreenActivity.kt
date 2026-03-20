@@ -143,41 +143,13 @@ class LockScreenActivity : AppCompatActivity() {
         binding.layoutPinLock.visibility      = View.GONE
         binding.layoutPatternLock.visibility  = View.GONE
         binding.layoutPasswordLock.visibility = View.VISIBLE
-
-        binding.etLockPassword.requestFocus()
-        binding.etLockPassword.post {
-            if (!isFinishing && !isDestroyed) {
-                (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager)
-                    .showSoftInput(binding.etLockPassword, InputMethodManager.SHOW_FORCED)
-            }
-        }
-
-        // Sirf Enter key aur button — TextWatcher auto-submit hata diya (crash ka root cause tha)
-        binding.etLockPassword.setOnEditorActionListener { _, _, _ ->
-            checkPassword()
-            true
-        }
-        binding.btnPasswordUnlock.setOnClickListener { checkPassword() }
-    }
-
-    private fun checkPassword() {
-        // CRASH FIX: isUnlocking flag + isFinishing check
-        if (isUnlocking || isFinishing || isDestroyed) return
-
-        val entered = binding.etLockPassword.text?.toString() ?: return
-        if (entered.isEmpty()) return
-
-        // Keyboard hide karo
-        try {
-            (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager)
-                .hideSoftInputFromWindow(binding.etLockPassword.windowToken, 0)
-        } catch (_: Exception) {}
-
-        if (entered == prefs.lockValue) {
-            unlockSuccess()
-        } else {
-            binding.etLockPassword.text?.clear()
-            handleWrongAttempt()
+        // Sirf button — koi auto-submit nahi, koi handler nahi
+        binding.btnPasswordUnlock.setOnClickListener {
+            if (isUnlocking || isFinishing || isDestroyed) return@setOnClickListener
+            val entered = binding.etLockPassword.text?.toString() ?: ""
+            if (entered.isEmpty()) return@setOnClickListener
+            if (entered == prefs.lockValue) unlockSuccess()
+            else { binding.etLockPassword.text?.clear(); handleWrongAttempt() }
         }
     }
 
