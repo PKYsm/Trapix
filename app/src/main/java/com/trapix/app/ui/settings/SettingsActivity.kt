@@ -191,9 +191,13 @@ class SettingsActivity : AppCompatActivity() {
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (hasUnsavedChanges) {
+                    // UX FIX: Pehle message contradictory tha —
+                    // "unsaved changes" aur "already saved" ek saath likha tha.
+                    // Sab settings turant SharedPreferences mein save hoti hain,
+                    // "Save" button sirf visual confirmation hai.
                     AlertDialog.Builder(this@SettingsActivity)
-                        .setTitle("Unsaved Changes")
-                        .setMessage("You have unsaved changes. Settings are auto-saved — everything is already saved!")
+                        .setTitle("Settings Saved")
+                        .setMessage("All your changes have been saved automatically.")
                         .setPositiveButton("OK") { _, _ ->
                             hasUnsavedChanges = false
                             finish()

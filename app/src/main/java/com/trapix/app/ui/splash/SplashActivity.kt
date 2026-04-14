@@ -17,6 +17,10 @@ class SplashActivity : AppCompatActivity() {
     private lateinit var binding: ActivitySplashBinding
     private lateinit var prefs: AppPrefs
 
+    // MEMORY LEAK FIX: Handler reference rakhni chahiye taaki onDestroy mein cancel ho sake
+    private val dotsHandler = Handler(Looper.getMainLooper())
+    private var dotsRunnable: Runnable? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivitySplashBinding.inflate(layoutInflater)
@@ -47,15 +51,21 @@ class SplashActivity : AppCompatActivity() {
 
     private fun animateDots() {
         var dotCount = 0
-        val handler = Handler(Looper.getMainLooper())
-        val runnable = object : Runnable {
+        dotsRunnable = object : Runnable {
             override fun run() {
                 dotCount = (dotCount + 1) % 4
                 binding.tvLoading.text = "Initializing" + ".".repeat(dotCount)
-                handler.postDelayed(this, 400)
+                dotsHandler.postDelayed(this, 400)
             }
         }
-        handler.post(runnable)
+        dotsHandler.post(dotsRunnable!!)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        // MEMORY LEAK FIX: activity destroy hone pe handler cancel karo
+        // Warna runnable views reference hold karta raha aur crash possible tha
+        dotsRunnable?.let { dotsHandler.removeCallbacks(it) }
     }
 
     private fun navigateNext() {

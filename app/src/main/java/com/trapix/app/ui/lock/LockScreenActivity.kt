@@ -39,6 +39,12 @@ class LockScreenActivity : AppCompatActivity() {
         binding.layoutPatternLock.visibility  = View.GONE
         binding.layoutPasswordLock.visibility = View.GONE
 
+        // DEPRECATION FIX: onBackPressed() override deprecated in API 33+
+        // OnBackPressedDispatcher use karo — LockScreen dismiss nahi hona chahiye
+        onBackPressedDispatcher.addCallback(this, object : androidx.activity.OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() { /* Block back — lock dismiss nahi hona chahiye */ }
+        })
+
         setupLockUI()
         setupBiometric()
     }
@@ -294,7 +300,5 @@ class LockScreenActivity : AppCompatActivity() {
         finish()
     }
 
-    override fun onBackPressed() {
-        // Lock screen dismiss nahi hona chahiye
-    }
+    // onBackPressed() hata diya — OnBackPressedDispatcher use ho raha hai onCreate mein
 }

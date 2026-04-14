@@ -89,7 +89,8 @@ class SetupLockActivity : AppCompatActivity() {
         numBtns.forEachIndexed { index, btn ->
             btn.setOnClickListener { appendPin(index.toString()) }
         }
-        binding.layoutNumpad.btn0.setOnClickListener { appendPin("0") }
+        // DUPLICATE FIX: btn0 ka listener loop mein already set ho gaya tha (index=0 → "0")
+        // Duplicate line hata di — warna listener override hota tha (same effect tha, but confusing)
         binding.layoutNumpad.btnBackspace.setOnClickListener { backspacePin() }
         binding.layoutNumpad.btnPinOk.setOnClickListener { confirmPin() }
     }
@@ -201,10 +202,18 @@ class SetupLockActivity : AppCompatActivity() {
             Toast.makeText(this, "Passwords don't match", Toast.LENGTH_SHORT).show()
             return
         }
-        // Hide keyboard
+
+        // CRASH FIX: LockScreenActivity wala same bug yahan bhi tha.
+        // Keyboard dismiss ke SAME frame mein FLAG_ACTIVITY_CLEAR_TASK se startActivity karo
+        // to IME window ka token invalid ho jaata hai → WindowManager crash.
+        // Fix: keyboard dismiss karo, phir NEXT FRAME pe saveLock call karo
+        // taaki IME window properly detach ho sake.
         val imm = getSystemService(android.content.Context.INPUT_METHOD_SERVICE) as android.view.inputmethod.InputMethodManager
-        imm.hideSoftInputFromWindow(binding.etConfirmPassword.windowToken, 0)
-        saveLock(AppPrefs.LOCK_TYPE_PASSWORD, pass)
+        val focused = currentFocus ?: binding.etConfirmPassword
+        imm.hideSoftInputFromWindow(focused.windowToken, 0)
+        focused.clearFocus()
+
+        binding.root.post { saveLock(AppPrefs.LOCK_TYPE_PASSWORD, pass) }
     }
 
     // ─── Save & Navigate ─────────────────────────────────────────────────────
