@@ -29,9 +29,12 @@ class SplashActivity : AppCompatActivity() {
         prefs = AppPrefs(this)
 
         com.trapix.app.util.DebugLogger.log("SPLASH", "App opened. isSetupDone=${prefs.isSetupDone}, lockType=${prefs.lockType}")
-        // Reset wrong attempt count on every fresh app open
-        prefs.resetWrongAttemptCount()
-        com.trapix.app.util.DebugLogger.log("SPLASH", "wrongAttemptCount reset to 0")
+        // Bug 1 Fix: Only reset the current-session lock attempt counter, NOT the
+        // total historical wrongAttemptCount (used as the capture sequence number).
+        // Resetting wrongAttemptCount caused all captures after an app open to be
+        // numbered from #1, corrupting gallery entries and notifications.
+        prefs.lockScreenAttempts = 0
+        com.trapix.app.util.DebugLogger.log("SPLASH", "lockScreenAttempts reset to 0")
 
         // Animate logo
         val fadeIn = AnimationUtils.loadAnimation(this, R.anim.fade_in)

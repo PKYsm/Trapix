@@ -58,8 +58,9 @@ class ImageDetailActivity : AppCompatActivity() {
 
     private fun loadLog(id: Long) {
         lifecycleScope.launch {
-            val logs = dao.getAllLogsList()
-            currentLog = logs.find { it.id == id }
+            // Bug 7 Fix: Use a direct ID query instead of loading all records and
+            // searching in memory, which was slow and wasteful with many captures.
+            currentLog = dao.getLogById(id)
             currentLog?.let { displayLog(it) }
         }
     }

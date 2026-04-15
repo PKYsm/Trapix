@@ -41,9 +41,8 @@ class ScreenUnlockReceiver : BroadcastReceiver() {
         val channelId = IntruderCaptureService.CHANNEL_ID
         val nm = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        val ch = NotificationChannel(channelId, "Trapix Security", NotificationManager.IMPORTANCE_HIGH)
-            .apply { enableVibration(true) }
-        nm.createNotificationChannel(ch)
+        // Bug 6 Fix: Channel is already created in TrapixApplication.onCreate() and
+        // IntruderCaptureService.onCreate(). No need to recreate it here every unlock.
 
         val pi = PendingIntent.getActivity(
             context, 0,

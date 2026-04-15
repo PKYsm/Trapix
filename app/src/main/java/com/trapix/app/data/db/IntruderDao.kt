@@ -46,4 +46,8 @@ interface IntruderDao {
     // Feature 7: Search by attempt number (stored as string for broader match)
     @Query("SELECT * FROM intruder_logs WHERE attemptNumber = :attempt ORDER BY timestamp DESC")
     fun getLogsByAttempt(attempt: Int): LiveData<List<IntruderLog>>
+
+    // Bug 7 Fix: Fetch single log by ID directly instead of loading all records
+    @Query("SELECT * FROM intruder_logs WHERE id = :id LIMIT 1")
+    suspend fun getLogById(id: Long): IntruderLog?
 }

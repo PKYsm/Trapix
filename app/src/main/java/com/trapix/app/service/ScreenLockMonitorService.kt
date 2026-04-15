@@ -227,8 +227,14 @@ class ScreenLockMonitorService : AccessibilityService() {
             val hint = WRONG_ATTEMPT_HINTS.find { candidate.contains(it) }
             if (hint != null) return hint
         }
+        // Bug 3 Fix: Each getChild() call allocates a new AccessibilityNodeInfo object
+        // that must be recycled manually (on Android < 33) to avoid memory leaks.
+        // Since onAccessibilityEvent fires frequently, unreleased nodes accumulate and
+        // can cause OOM crashes over time.
         for (i in 0 until node.childCount) {
-            val result = findErrorText(try { node.getChild(i) } catch (_: Exception) { null }, depth + 1)
+            val child = try { node.getChild(i) } catch (_: Exception) { null } ?: continue
+            val result = findErrorText(child, depth + 1)
+            try { child.recycle() } catch (_: Exception) {}
             if (result != null) return result
         }
         return null

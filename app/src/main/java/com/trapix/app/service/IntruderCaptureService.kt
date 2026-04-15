@@ -25,7 +25,6 @@ import com.trapix.app.data.prefs.AppPrefs
 import com.trapix.app.ui.gallery.MainActivity
 import com.trapix.app.util.DebugLogger
 import kotlinx.coroutines.*
-import kotlinx.coroutines.suspendCancellableCoroutine
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -174,9 +173,11 @@ class IntruderCaptureService : LifecycleService() {
                     override fun onImageSaved(result: ImageCapture.OutputFileResults) {
                         DebugLogger.log(TAG, "$label photo saved! ✓ size=${file.length() / 1024}KB")
                         provider.unbindAll()
-                        serviceScope.launch(Dispatchers.IO) {
+                        // Bug 2 Fix: Use NonCancellable so the DB write and gallery save
+                        // complete even if the service is being destroyed (serviceScope
+                        // cancelled) when stopSelf() is processed by Android.
+                        serviceScope.launch(Dispatchers.IO + NonCancellable) {
                             saveToDb(file, label, attempt, location)
-                            // BUG 7 FIX: Gallery save properly karo (MediaStore API)
                             if (prefs.saveToGallery) saveToGalleryMediaStore(file)
                         }
                         resume(file)
@@ -237,18 +238,21 @@ class IntruderCaptureService : LifecycleService() {
 
     // ── Helpers ────────────────────────────────────────────────────────────────
 
-    private fun saveToDb(file: File, label: String, attempt: Int, location: Location?) {
+    // Bug 5 Fix: Was using runBlocking inside a Dispatchers.IO coroutine, which
+    // blocks a thread pool thread unnecessarily and risks starvation under load.
+    // Now a proper suspend function — caller is already on Dispatchers.IO.
+    private suspend fun saveToDb(file: File, label: String, attempt: Int, location: Location?) {
         try {
             val log = IntruderLog(
-                imagePath   = file.absolutePath,
-                timestamp   = System.currentTimeMillis(),
-                latitude    = location?.latitude ?: 0.0,
-                longitude   = location?.longitude ?: 0.0,
+                imagePath     = file.absolutePath,
+                timestamp     = System.currentTimeMillis(),
+                latitude      = location?.latitude ?: 0.0,
+                longitude     = location?.longitude ?: 0.0,
                 attemptNumber = attempt,
-                cameraUsed  = label,
-                deviceInfo  = "${Build.MANUFACTURER} ${Build.MODEL}"
+                cameraUsed    = label,
+                deviceInfo    = "${Build.MANUFACTURER} ${Build.MODEL}"
             )
-            runBlocking { db.intruderDao().insert(log) }
+            db.intruderDao().insert(log)
             DebugLogger.log(TAG, "$label: saved to DB ok")
         } catch (e: Exception) {
             DebugLogger.error(TAG, "DB save error: ${e.message}")
