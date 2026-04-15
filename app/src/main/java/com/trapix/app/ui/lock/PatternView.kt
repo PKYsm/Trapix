@@ -71,7 +71,6 @@ class PatternView @JvmOverloads constructor(
     override fun onSizeChanged(w: Int, h: Int, oldW: Int, oldH: Int) {
         super.onSizeChanged(w, h, oldW, oldH)
         recalculate(w, h)
-        DebugLogger.log(TAG, "onSizeChanged: w=$w h=$h cellSize=${"%.2f".format(cellSize)} touchRadius=${"%.1f".format(touchRadius)}")
     }
 
     private fun recalculate(w: Int, h: Int) {
@@ -126,19 +125,13 @@ class PatternView @JvmOverloads constructor(
     override fun onTouchEvent(event: MotionEvent): Boolean {
         when (event.action) {
             MotionEvent.ACTION_DOWN -> {
-                // BUG 1 FIX #1: Pehla pending clearRunnable cancel karo (race condition)
                 clearRunnable?.let { clearHandler.removeCallbacks(it) }
                 clearRunnable = null
-
-                // BUG 1 FIX #2: ScrollView ko bolo touch intercept mat karo
-                // Yahi main wajah thi ki MOVE events nahi mil rahe the
                 parent?.requestDisallowInterceptTouchEvent(true)
-
                 isError = false; isSuccess = false
                 selectedNodes.clear()
                 isDrawing = true
                 currentTouchX = event.x; currentTouchY = event.y
-                DebugLogger.log(TAG, "Touch DOWN at x=${event.x.toInt()} y=${event.y.toInt()}, viewSize=${width}x${height}")
                 onPatternListener?.onPatternStart()
                 checkNodeHit(event.x, event.y)
                 invalidate()
@@ -153,23 +146,18 @@ class PatternView @JvmOverloads constructor(
             }
 
             MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                // ScrollView ko wapas allow karo
                 parent?.requestDisallowInterceptTouchEvent(false)
                 isDrawing = false
                 val count = selectedNodes.size
-                DebugLogger.log(TAG, "Touch UP, nodes selected: $count -> $selectedNodes")
-
+                // Bug 9 Fix: Removed DebugLogger calls from inside touch events.
+                // DebugLogger.log() does a synchronous SharedPreferences read + write
+                // on the calling thread. Inside onTouchEvent (main thread, fires dozens
+                // of times/sec during drawing), this caused ANR freezes on the pattern
+                // lock screen. Logging kept at ACTION_UP only as a one-time event log.
+                DebugLogger.log(TAG, "Pattern complete: nodes=$count")
                 when {
-                    count >= MIN_NODES -> {
-                        DebugLogger.log(TAG, "Pattern complete: $count nodes")
-                        onPatternListener?.onPatternComplete(selectedNodes.toList())
-                    }
-                    count > 0 -> {
-                        DebugLogger.log(TAG, "Too few nodes ($count < $MIN_NODES)")
-                        setError()
-                        onTooFewNodes?.invoke()
-                    }
-                    else -> DebugLogger.log(TAG, "No nodes hit, ignoring")
+                    count >= MIN_NODES -> onPatternListener?.onPatternComplete(selectedNodes.toList())
+                    count > 0 -> { setError(); onTooFewNodes?.invoke() }
                 }
                 invalidate()
                 return true
@@ -185,7 +173,6 @@ class PatternView @JvmOverloads constructor(
             val dx = x - pos.x; val dy = y - pos.y
             val dist = sqrt((dx * dx + dy * dy).toDouble()).toFloat()
             if (dist <= touchRadius) {
-                DebugLogger.log(TAG, "Node $i HIT! dist=${"%.1f".format(dist)}")
                 selectedNodes.add(i); invalidate()
             }
         }

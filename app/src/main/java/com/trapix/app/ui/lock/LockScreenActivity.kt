@@ -24,8 +24,13 @@ class LockScreenActivity : AppCompatActivity() {
     private lateinit var prefs: AppPrefs
     private var enteredPin = ""
 
-    // Double-submit / double-unlock crash fix
     private var isUnlocking = false
+
+    // Bug 10 Fix: Reuse a single Handler instead of creating a new one on every
+    // digit press. Creating Handler(Looper.getMainLooper()) each press leaks the
+    // activity reference and can queue multiple checkPin() calls.
+    private val pinHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private var pinCheckRunnable: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,7 +89,11 @@ class LockScreenActivity : AppCompatActivity() {
             enteredPin += digit
             updateLockPinDots()
             if (enteredPin.length == prefs.lockValue.length && prefs.lockValue.isNotEmpty()) {
-                Handler(Looper.getMainLooper()).postDelayed({ checkPin() }, 150)
+                // Cancel any already-queued check before scheduling a new one
+                pinCheckRunnable?.let { pinHandler.removeCallbacks(it) }
+                val r = Runnable { checkPin() }
+                pinCheckRunnable = r
+                pinHandler.postDelayed(r, 150)
             }
         }
     }
@@ -286,7 +295,10 @@ class LockScreenActivity : AppCompatActivity() {
         isUnlocking = true
 
         DebugLogger.log("LOCK", "UNLOCK SUCCESS!")
-        prefs.resetWrongAttemptCount()
+        // Bug 8 Fix: resetWrongAttemptCount() was zeroing out wrongAttemptCount (the
+        // total historical capture sequence number) on every unlock, so captures always
+        // restarted from #1. Only reset the current-session attempt counter here.
+        prefs.lockScreenAttempts = 0
 
         (application as? com.trapix.app.TrapixApplication)?.let {
             it.isUnlockingNow = true
